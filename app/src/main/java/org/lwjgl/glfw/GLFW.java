@@ -14,4 +14,8 @@ public class GLFW {
         return false;
     }
 
+    public static void glfwSetCursor(long window, long cursor) {
+        // todo change cursor???
+    }
+
 }

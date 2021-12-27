@@ -14,24 +14,31 @@ import javax.microedition.khronos.opengles.GL10
 
 import android.content.ContextWrapper
 import android.os.Build
+import android.view.GestureDetector
+import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.annotation.RequiresApi
+import androidx.core.view.GestureDetectorCompat
 import me.anno.Logging
-import me.anno.config.DefaultConfig
+import me.anno.cache.instances.TextCache
 import me.anno.gpu.OpenGL
 import me.anno.gpu.buffer.Buffer
 import me.anno.gpu.shader.OpenGLShader
 import me.anno.gpu.texture.Texture2D
 import me.anno.input.Input
-import me.anno.input.MouseButton
 import me.anno.input.Touch
 import me.anno.studio.StudioBase
+import me.anno.studio.StudioBase.Companion.addEvent
 import me.anno.utils.LOGGER
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.opengl.GL11
-import kotlin.math.log
 
-class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
+class MainActivity : AppCompatActivity(),
+    GLSurfaceView.Renderer,
+    GestureDetector.OnGestureListener,
+    GestureDetector.OnDoubleTapListener {
+
+    private val resolutionScale = 4f
 
     // todo input events: we can call the glfw events, or the input events :)
 
@@ -98,33 +105,105 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
         }
 
         setContentView(glSurfaceView)
-        Input
-        glSurfaceView.setOnTouchListener { _, event ->
-            val pid = event.getPointerId(event.actionIndex)
-            println("pid ${event.action}, ${event.x} ${event.y}")
-            when (event.action) {
-                MotionEvent.ACTION_MOVE,
-                MotionEvent.ACTION_HOVER_MOVE -> {
-                    Touch.Companion.onTouchMove(pid, event.x, event.y)
-                }
-                MotionEvent.ACTION_UP,
-                MotionEvent.ACTION_POINTER_UP -> {
-                    Touch.Companion.onTouchUp(pid, event.x, event.y)
-                }
-                MotionEvent.ACTION_DOWN,
-                MotionEvent.ACTION_POINTER_DOWN -> {
-                    Touch.Companion.onTouchDown(pid, event.x, event.y)
-                }
+
+        detector = GestureDetectorCompat(this, this)
+        detector.setOnDoubleTapListener(this)
+
+    }
+
+    lateinit var detector: GestureDetectorCompat
+
+    override fun onDown(e: MotionEvent?): Boolean {
+        return false
+    }
+
+    override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+        return false
+    }
+
+    override fun onSingleTapUp(e: MotionEvent?): Boolean {
+        return false
+    }
+
+    override fun onDoubleTapEvent(e: MotionEvent?): Boolean {
+        return false
+    }
+
+    override fun onFling(
+        e1: MotionEvent?,
+        e2: MotionEvent?,
+        velocityX: Float,
+        velocityY: Float
+    ): Boolean {
+        return false
+    }
+
+    override fun onLongPress(e: MotionEvent?) {
+        // todo cause onrightclick event
+    }
+
+    override fun onShowPress(e: MotionEvent?) {
+
+    }
+
+    override fun onDoubleTap(e: MotionEvent?): Boolean {
+        return false
+    }
+
+    override fun onScroll(
+        e1: MotionEvent?,
+        e2: MotionEvent?,
+        distanceX: Float,
+        distanceY: Float
+    ): Boolean {
+        addEvent { Input.onMouseWheel(distanceX, distanceY, false) }
+        return true
+    }
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
+        // todo the key mapping might not be correct, and probably is wrong
+        addEvent { Input.onKeyPressed(keyCode) }
+        return true
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        addEvent { Input.onKeyReleased(keyCode) }
+        return true
+    }
+
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        event ?: return false
+        val pid = event.getPointerId(event.actionIndex)
+        val isMouse = pid == 0
+        val x = event.x
+        val y = event.y
+        when (event.action) {
+            MotionEvent.ACTION_MOVE,
+            MotionEvent.ACTION_HOVER_MOVE -> addEvent {
+                Touch.Companion.onTouchMove(pid, x, y)
+                // only if there is a single pointer?
+                if (isMouse) Input.onMouseMove(x, y)
             }
-            // todo we need to call click & such
-            true
+            MotionEvent.ACTION_DOWN,
+            MotionEvent.ACTION_POINTER_DOWN -> addEvent {
+                Touch.Companion.onTouchDown(pid, x, y)
+                if (isMouse) Input.onMousePress(GLFW_MOUSE_BUTTON_LEFT)
+            }
+            MotionEvent.ACTION_UP,
+            MotionEvent.ACTION_POINTER_UP -> addEvent {
+                Touch.Companion.onTouchUp(pid, x, y)
+                if (isMouse) Input.onMouseRelease(GLFW_MOUSE_BUTTON_LEFT)
+                // update mouse position, when the gesture is finished (no more touches down)?
+            }
         }
+        return detector.onTouchEvent(event)
     }
 
     @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
 
         // all old resources have become worthless
+        GFX.glThread = Thread.currentThread();
         OpenGL.newSession()
 
         GL11.testShaderVersions()
@@ -169,11 +248,12 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         GFX.width = width
         GFX.height = height
-        Input.invalidateLayout();
+        addEvent { Input.invalidateLayout(); }
     }
 
     private fun invalidateOpenGLES() {
         OpenGLShader.lastProgram = -1
+        TextCache.clear()
         Texture2D.invalidateBinding()
         Buffer.invalidateBinding()
     }
@@ -182,7 +262,7 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
     override fun onDrawFrame(gl: GL10?) {
         // run drawing function
         try {
-            logger.info("Drawing Frame ${GFX.width} x ${GFX.height}")
+            GFX.glThread = Thread.currentThread()
             invalidateOpenGLES()
             when (frameIndex++) {
                 0 -> {
@@ -225,6 +305,12 @@ class MainActivity : AppCompatActivity(), GLSurfaceView.Renderer {
         super.onPause()
         glSurfaceView.onPause()
         logger.info("Paused")
+    }
+
+    companion object {
+        private const val GLFW_MOUSE_BUTTON_LEFT = 0
+        private const val GLFW_MOUSE_BUTTON_RIGHT = 1
+        private const val GLFW_MOUSE_BUTTON_MIDDLE = 2
     }
 
 }

@@ -9,7 +9,6 @@ import static android.opengl.GLES10.GL_LINEAR;
 import static android.opengl.GLES10.GL_LINEAR_MIPMAP_LINEAR;
 import static android.opengl.GLES10.GL_LINEAR_MIPMAP_NEAREST;
 import static android.opengl.GLES10.GL_LINES;
-import static android.opengl.GLES10.GL_LINE_LOOP;
 import static android.opengl.GLES10.GL_LINE_STRIP;
 import static android.opengl.GLES10.GL_LUMINANCE;
 import static android.opengl.GLES10.GL_LUMINANCE_ALPHA;
@@ -17,7 +16,6 @@ import static android.opengl.GLES10.GL_MULTISAMPLE;
 import static android.opengl.GLES10.GL_NEAREST;
 import static android.opengl.GLES10.GL_NEAREST_MIPMAP_LINEAR;
 import static android.opengl.GLES10.GL_NEAREST_MIPMAP_NEAREST;
-import static android.opengl.GLES10.GL_POINTS;
 import static android.opengl.GLES10.GL_REPEAT;
 import static android.opengl.GLES10.GL_RGB;
 import static android.opengl.GLES10.GL_RGBA;
@@ -81,6 +79,7 @@ import androidx.annotation.RequiresApi;
 
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
+import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -96,8 +95,11 @@ import me.anno.gpu.shader.Shader;
 import me.anno.gpu.shader.builder.Variable;
 import me.anno.gpu.texture.Texture2D;
 import me.anno.utils.Warning;
+import me.anno.utils.files.Files;
 
 public class GL11 {
+
+    private static final boolean print = false;
 
     public static final int GL_COLOR_BUFFER_BIT = GLES11.GL_COLOR_BUFFER_BIT;
     public static final int GL_DEPTH_BUFFER_BIT = GLES11.GL_DEPTH_BUFFER_BIT;
@@ -126,8 +128,6 @@ public class GL11 {
         float x, y, z;
         float r, g, b;
     }
-
-    private static final boolean print = true;
 
     private static int boundFramebuffer, boundProgram;
 
@@ -487,15 +487,19 @@ public class GL11 {
     }
 
     public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, ByteBuffer buffer) {
-        check();
-        if (internalFormat == GL_LUMINANCE) format = internalFormat;// OpenGL ES is stricter
-        GLES11.glTexImage2D(target, level, internalFormat, width, height, border, format, type, buffer);
-        if (print)
-            System.out.println("glTexImage2D(" + getTextureTarget(target) + ", level " + level +
-                    ", internal " + getFormat(internalFormat) + ", " + width + " x " + height + ", " + border +
-                    ", format " + getFormat(format) + ", " + getType(type) +
-                    ", data: " + (buffer != null ? "x" + buffer.remaining() : "*0"));
-        check();
+        if (buffer == null || buffer.remaining() == 0) {
+            glTexImage2D(target, level, internalFormat, width, height, border, format, type, 0L);
+        } else {
+            check();
+            if (internalFormat == GL_LUMINANCE) format = internalFormat;// OpenGL ES is stricter
+            GLES11.glTexImage2D(target, level, internalFormat, width, height, border, format, type, buffer);
+            if (print)
+                System.out.println("glTexImage2D(" + getTextureTarget(target) + ", level " + level +
+                        ", internal " + getFormat(internalFormat) + ", " + width + " x " + height + ", " + border +
+                        ", format " + getFormat(format) + ", " + getType(type) +
+                        ", data: " + buffer);
+            check();
+        }
     }
 
     public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, long dataPointer) {
@@ -525,6 +529,7 @@ public class GL11 {
             }
             format = GL_RGB;// OpenGL ES is more strict than OpenGL
             buffer0.rewind();
+            Texture2D.Companion.unpackAlignment(width * 3);
             GLES20.glTexImage2D(target, level, internalFormat, width, height, border, format, type, buffer0);
         } else {
             buffer.put(data);
@@ -1014,7 +1019,7 @@ public class GL11 {
         // check();
     }
 
-    private static void checkProgramStatus(){
+    private static void checkProgramStatus() {
         // for testing
         if (print) {
             check();
@@ -1028,7 +1033,7 @@ public class GL11 {
         }
     }
 
-    private static void absorbErrors(){
+    private static void absorbErrors() {
         glGetError();
     }
 
@@ -1043,7 +1048,8 @@ public class GL11 {
         // crashes the same way
         // GLES30.glDrawElements(mode, count, type, 0);
         check();
-        System.out.println("glDrawElementsInstanced(" + getDrawMode(mode) + ", " + count + "x, " + getType(type) + ", 0, " + instanceCount + ")");
+        if (print)
+            System.out.println("glDrawElementsInstanced(" + getDrawMode(mode) + ", " + count + "x, " + getType(type) + ", 0, " + instanceCount + ")");
         GLES30.glDrawElementsInstanced(mode, count, type, (int) firstInstanceIndex, instanceCount);
         // check();
         absorbErrors();

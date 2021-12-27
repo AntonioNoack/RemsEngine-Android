@@ -1,5 +1,6 @@
 package org.lwjgl.system;
 
+import java.lang.reflect.Method;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -21,8 +22,21 @@ public class MemoryUtil {
         return memAlloc(size * 2).asShortBuffer();
     }
 
-    public static void memFree(Buffer buffer) {
-        // todo delete this buffer
+    public static void memFree(Buffer toBeDestroyed) {
+        if (toBeDestroyed.isDirect()) {
+            try {
+                Method cleanerMethod = toBeDestroyed.getClass().getMethod("cleaner");
+                cleanerMethod.setAccessible(true);
+                Object cleaner = cleanerMethod.invoke(toBeDestroyed);
+                if (cleaner != null) {
+                    Method cleanMethod = cleaner.getClass().getMethod("clean");
+                    cleanMethod.setAccessible(true);
+                    cleanMethod.invoke(cleaner);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }
