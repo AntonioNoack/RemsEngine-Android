@@ -95,7 +95,6 @@ import me.anno.gpu.shader.Shader;
 import me.anno.gpu.shader.builder.Variable;
 import me.anno.gpu.texture.Texture2D;
 import me.anno.utils.Warning;
-import me.anno.utils.files.Files;
 
 public class GL11 {
 
@@ -109,6 +108,7 @@ public class GL11 {
     public static final int GL_QUADS = 7;// why???
 
     public static final int GL_DEBUG_OUTPUT = 0x92E0;// GLES32.GL_DEBUG_OUTPUT;
+    public static final int GL_TEXTURE_SWIZZLE_RGBA = 36422;// since OpenGL ES 3.3, which somehow isn't part of Android...
 
     public static final int GL_PROJECTION = GLES11.GL_PROJECTION;
     public static final int GL_MODELVIEW = GLES11.GL_MODELVIEW;
@@ -547,7 +547,7 @@ public class GL11 {
     public static void glTexSubImage2D(int target, int level, int x, int y, int w, int h, int format, int type, ByteBuffer data) {
         check();
         GLES20.glTexSubImage2D(target, level, x, y, w, h, format, type, data);
-        if (print)
+        if (print || glGetError() != 0)
             System.out.println("glTexSubImage2D(" + getTextureTarget(target) + ", level " + level + ", " + x +
                     ", " + y + ", " + w + ", " + h + ", " + getFormat(format) +
                     ", " + getType(type) + ", " + data + ")");
@@ -568,6 +568,8 @@ public class GL11 {
                 return "TEXTURE_WRAP_R";
             case GL_GENERATE_MIPMAP:
                 return "GENERATE_MIPMAP";
+            case GL_TEXTURE_SWIZZLE_RGBA:
+                return "TEXTURE_SWIZZLE_RGBA";
             default:
                 return key + "";
         }
@@ -611,6 +613,18 @@ public class GL11 {
             return;
         }
         GLES11.glTexParameteri(target, key, value);
+        check();
+    }
+
+    public static void glTexParameteriv(int target, int key, int[] values) {
+        if (print)
+            System.out.println("glTexParameteriv(" + getTextureTarget(target) + ", " + getTexKey(key) + ", " + Arrays.toString(values) + ")");
+        if (key == GL_TEXTURE_SWIZZLE_RGBA && version10x <= 32) {
+            // only supported in OpenGL ES 3.3
+            return;
+        }
+        check();
+        GLES11.glTexParameteriv(target, key, values, 0);
         check();
     }
 
@@ -1108,9 +1122,16 @@ public class GL11 {
 
     public static void glReadPixels(int x, int y, int w, int h, int format, int type, ByteBuffer pixels) {
         check();
-        GLES20.glReadPixels(x, y, w, h, format, type, pixels);
         if (print) System.out.println("glReadPixels(" + x + ", " + y + ", " + w + ", " + h +
                 ", " + getFormat(format) + ", " + getType(type) + ", " + pixels + ")");
+        GLES20.glReadPixels(x, y, w, h, format, type, pixels);
+        check();
+    }
+
+    public static void glScissor(int x, int y, int w, int h) {
+        check();
+        if (print) System.out.println("glScissor(" + x + ", " + y + ", " + w + ", " + h + ")");
+        GLES20.glScissor(x, y, w, h);
         check();
     }
 

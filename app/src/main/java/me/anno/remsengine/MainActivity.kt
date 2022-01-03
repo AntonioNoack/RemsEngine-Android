@@ -14,19 +14,19 @@ import javax.microedition.khronos.opengles.GL10
 
 import android.content.ContextWrapper
 import android.os.Build
-import android.view.GestureDetector
-import android.view.KeyEvent
-import android.view.MotionEvent
+import android.view.*
 import androidx.annotation.RequiresApi
 import androidx.core.view.GestureDetectorCompat
 import me.anno.Logging
 import me.anno.cache.instances.TextCache
+import me.anno.config.DefaultConfig
 import me.anno.gpu.OpenGL
 import me.anno.gpu.buffer.Buffer
 import me.anno.gpu.shader.OpenGLShader
 import me.anno.gpu.texture.Texture2D
 import me.anno.input.Input
 import me.anno.input.Touch
+import me.anno.remsengine.android.KeyMap
 import me.anno.studio.StudioBase
 import me.anno.studio.StudioBase.Companion.addEvent
 import me.anno.utils.LOGGER
@@ -38,19 +38,19 @@ class MainActivity : AppCompatActivity(),
     GestureDetector.OnGestureListener,
     GestureDetector.OnDoubleTapListener {
 
-    private val resolutionScale = 4f
-
-    // todo input events: we can call the glfw events, or the input events :)
-
     private lateinit var glSurfaceView: GLSurfaceView
 
-    private lateinit var engine: RemsEngine
+    private var engine: RemsEngine? = null
 
     private val logger = LogManager.getLogger(MainActivity::class)
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // hide top bar
+        supportActionBar?.hide()
+
         glSurfaceView = GLSurfaceView(this)
 
         val c = ContextWrapper(this)
@@ -70,7 +70,7 @@ class MainActivity : AppCompatActivity(),
         logger.info("s1: $src1, ${src1.exists}, ${src1.mkdirs()}")
         logger.info("s2: $src2, ${src2.exists}, ${src2.mkdirs()}")
 
-        engine = RemsEngine()
+        val engine = this.engine ?: RemsEngine()
         StudioBase.instance = engine
         engine.setupNames()
         engine.tick("run")
@@ -81,6 +81,7 @@ class MainActivity : AppCompatActivity(),
         GFX.onShutdown = engine::onShutdown
         engine.loadConfig()
         engine.tick("config")
+        this.engine = engine
         // GFX.run()
         // engine.run()
 
@@ -135,18 +136,23 @@ class MainActivity : AppCompatActivity(),
         velocityX: Float,
         velocityY: Float
     ): Boolean {
+        // todo how can we use that, would be ever use it?
         return false
     }
 
     override fun onLongPress(e: MotionEvent?) {
-        // todo cause onrightclick event
+        addEvent {
+            Input.onMousePress(GLFW_MOUSE_BUTTON_RIGHT)
+            Input.onMouseRelease(GLFW_MOUSE_BUTTON_RIGHT)
+        }
     }
 
     override fun onShowPress(e: MotionEvent?) {
-
+        // mmh...
     }
 
     override fun onDoubleTap(e: MotionEvent?): Boolean {
+        // double click, but we have implemented that ourselves anyways
         return false
     }
 
@@ -248,7 +254,7 @@ class MainActivity : AppCompatActivity(),
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         GFX.width = width
         GFX.height = height
-        addEvent { Input.invalidateLayout(); }
+        addEvent { Input.invalidateLayout() }
     }
 
     private fun invalidateOpenGLES() {
@@ -262,12 +268,15 @@ class MainActivity : AppCompatActivity(),
     override fun onDrawFrame(gl: GL10?) {
         // run drawing function
         try {
+            // neither true nor false work without issues
+            // DefaultConfig["ui.sparseRedraw"] = true
             GFX.glThread = Thread.currentThread()
             invalidateOpenGLES()
             when (frameIndex++) {
                 0 -> {
                     GFX.check()
                     GFX.renderFrame0()
+                    KeyMap.defineKeys()
                     GFX.check()
                 }
                 1 -> {
@@ -308,9 +317,9 @@ class MainActivity : AppCompatActivity(),
     }
 
     companion object {
-        private const val GLFW_MOUSE_BUTTON_LEFT = 0
-        private const val GLFW_MOUSE_BUTTON_RIGHT = 1
-        private const val GLFW_MOUSE_BUTTON_MIDDLE = 2
+        const val GLFW_MOUSE_BUTTON_LEFT = 0
+        const val GLFW_MOUSE_BUTTON_RIGHT = 1
+        const val GLFW_MOUSE_BUTTON_MIDDLE = 2
     }
 
 }

@@ -34,7 +34,8 @@ public class MemoryUtil {
                     cleanMethod.invoke(cleaner);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                // we don't really care...
+                // e.printStackTrace();
             }
         }
     }
