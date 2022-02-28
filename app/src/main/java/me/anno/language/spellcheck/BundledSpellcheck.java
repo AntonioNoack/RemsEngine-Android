@@ -1,12 +1,12 @@
 package me.anno.language.spellcheck;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import me.anno.language.Language;
 
 public class BundledSpellcheck {
 
-    public static void runInstance(Language language, ConcurrentHashMap<Object, Request> queue) {
+    public static void runInstance(Language language, ConcurrentLinkedQueue<Request> queue) {
         /*try {
             CommandLine instance = new CommandLine(language.getCode());
             while (!Engine.INSTANCE.getShutdown()) {

@@ -7,6 +7,7 @@ import java.awt.Graphics2D;
 
 import me.anno.remsengine.R;
 
+@SuppressWarnings("unused")
 public class BufferedImage {
 
     public int width, height, type;

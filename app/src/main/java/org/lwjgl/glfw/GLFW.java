@@ -1,5 +1,7 @@
 package org.lwjgl.glfw;
 
+import me.anno.remsengine.MainActivity;
+
 public class GLFW {
 
     public static void glfwTerminate() {
@@ -16,6 +18,11 @@ public class GLFW {
 
     public static void glfwSetCursor(long window, long cursor) {
         // todo change cursor???
+    }
+
+    public static void glfwGetCursorPos(long window, double[] x, double[] y) {
+        x[0] = MainActivity.Companion.getLastMouseX();
+        y[0] = MainActivity.Companion.getLastMouseY();
     }
 
 }

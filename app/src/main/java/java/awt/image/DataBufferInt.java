@@ -1,5 +1,6 @@
 package java.awt.image;
 
+@SuppressWarnings("unused")
 public class DataBufferInt extends DataBuffer {
 
     int[] data;

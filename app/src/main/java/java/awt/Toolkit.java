@@ -1,5 +1,6 @@
 package java.awt;
 
+@SuppressWarnings("unused")
 public class Toolkit {
 
     private static final Toolkit instance = new Toolkit();

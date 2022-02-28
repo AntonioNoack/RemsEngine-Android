@@ -3,6 +3,7 @@ package java.lang.management;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 public class ManagementFactory implements RuntimeMXBean {
 
     private static final ManagementFactory instance = new ManagementFactory();

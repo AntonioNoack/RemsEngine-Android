@@ -1,5 +1,6 @@
 package java.awt;
 
+@SuppressWarnings("unused")
 public class Font {
 
     public String name = "Verdana";
@@ -11,6 +12,10 @@ public class Font {
 
     public Font(String name) {
         this.name = name;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public static Font decode(String font) {

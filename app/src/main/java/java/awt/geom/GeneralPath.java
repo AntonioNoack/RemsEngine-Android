@@ -2,6 +2,7 @@ package java.awt.geom;
 
 import java.awt.Shape;
 
+@SuppressWarnings("unused")
 public class GeneralPath {
 
     private Shape path;

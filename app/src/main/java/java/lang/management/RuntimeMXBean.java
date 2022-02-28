@@ -8,7 +8,9 @@ package java.lang.management;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 public interface RuntimeMXBean extends PlatformManagedObject {
+
     String getName();
 
     String getVmName();

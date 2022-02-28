@@ -1,5 +1,6 @@
 package java.awt;
 
+@SuppressWarnings("unused")
 public class RenderingHints {
 
     public static Key KEY_FRACTIONALMETRICS = new Key();

@@ -13,6 +13,8 @@ public interface PathIterator {
 
     boolean isDone();
 
+    void next();
+
     int currentSegment(float[] dst);
 
     int getWindingRule();

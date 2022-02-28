@@ -67,6 +67,7 @@ import static android.opengl.GLES30.GL_TEXTURE_3D;
 import static android.opengl.GLES30.GL_TEXTURE_WRAP_R;
 import static android.opengl.GLES31.GL_TEXTURE_2D_MULTISAMPLE;
 
+import static java.util.Collections.emptyList;
 import static javax.microedition.khronos.opengles.GL11ExtensionPack.GL_DEPTH_COMPONENT32;
 import static javax.microedition.khronos.opengles.GL11ExtensionPack.GL_MIRRORED_REPEAT;
 
@@ -82,32 +83,39 @@ import org.joml.Vector4f;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import me.anno.gpu.GFX;
 import me.anno.gpu.buffer.Attribute;
 import me.anno.gpu.buffer.StaticBuffer;
+import me.anno.gpu.shader.GLSLType;
 import me.anno.gpu.shader.Shader;
 import me.anno.gpu.shader.builder.Variable;
 import me.anno.gpu.texture.Texture2D;
 import me.anno.utils.Warning;
 
+@SuppressWarnings("unused")
 public class GL11 {
 
     private static final boolean print = false;
+    private static final boolean printFramebuffers = true;
+    private static final boolean printDeletes = false;
+    public static final boolean ignoreErrors = true;
 
     public static final int GL_COLOR_BUFFER_BIT = GLES11.GL_COLOR_BUFFER_BIT;
     public static final int GL_DEPTH_BUFFER_BIT = GLES11.GL_DEPTH_BUFFER_BIT;
     public static final int GL_STENCIL_BUFFER_BIT = GLES11.GL_STENCIL_BUFFER_BIT;
 
     public static final int GL_TRIANGLES = GLES11.GL_TRIANGLES;
-    public static final int GL_QUADS = 7;// why???
+    public static final int GL_QUADS = 7;// why is this missing for OpenGL ES?
 
-    public static final int GL_DEBUG_OUTPUT = 0x92E0;// GLES32.GL_DEBUG_OUTPUT;
+    public static final int GL_DEBUG_OUTPUT = 0x92E0;
     public static final int GL_TEXTURE_SWIZZLE_RGBA = 36422;// since OpenGL ES 3.3, which somehow isn't part of Android...
 
     public static final int GL_PROJECTION = GLES11.GL_PROJECTION;
@@ -115,6 +123,10 @@ public class GL11 {
 
     // OpenGL is single-threaded, so we can use this static instance
     private static final int[] tmpInt1 = new int[1];
+    private static final int[] createdFBs = new int[65536];
+    private static final int[] createdTexs = new int[65536];
+    private static final int[] boundTex = new int[64];
+    private static int activeTexture = 0;
 
     public static int major, minor, version10x;
 
@@ -129,6 +141,13 @@ public class GL11 {
         float r, g, b;
     }
 
+    public static void invalidateBinding() {
+        Arrays.fill(createdFBs, 0);
+        Arrays.fill(createdTexs, 0);
+        Arrays.fill(boundTex, 0);
+        activeTexture = 0;
+    }
+
     private static int boundFramebuffer, boundProgram;
 
     private static final ArrayList<Point> gl1Triangles = new ArrayList<>();
@@ -141,21 +160,24 @@ public class GL11 {
     private static int gl1DrawMode;
 
     static {
-        ArrayList<Variable> var = new ArrayList<>();
-        var.add(new Variable("vec3", "color"));
+        ArrayList<Variable> varyings = new ArrayList<>(1);
+        varyings.add(new Variable(GLSLType.V3F, "color"));
+        ArrayList<Variable> attributes = new ArrayList<>(2);
+        attributes.add(new Variable(GLSLType.V3F, "pos"));
+        attributes.add(new Variable(GLSLType.V3F, "col"));
+        ArrayList<Variable> vsUniforms = new ArrayList<>(2);
+        vsUniforms.add(new Variable(GLSLType.M4x4, "cameraMatrix"));
+        vsUniforms.add(new Variable(GLSLType.M4x4, "modelMatrix"));
+        List<Variable> fsUniforms = emptyList();
         gl1Shader = new Shader(
-                "OpenGL1",
-                null, "" +
-                "attribute vec3 pos;\n" +
-                "attribute vec3 col;\n" +
-                "uniform mat4 cameraMatrix, modelMatrix;\n" +
+                "OpenGL1", attributes, vsUniforms, "" +
                 "void main(){\n" +
                 "   gl_Position = cameraMatrix * modelMatrix * vec4(pos, 1.0);\n" +
                 "   color = col;\n" +
-                "}", var, "" +
+                "}", varyings, fsUniforms, "" +
                 "void main(){\n" +
                 "   gl_FragColor = vec4(color, 1.0);\n" +
-                "}", false
+                "}"
         );
         gl1Attributes.add(new Attribute("pos", 3));
         gl1Attributes.add(new Attribute("col", 3));
@@ -339,7 +361,10 @@ public class GL11 {
             }
             GLES20.glDeleteShader(shader);
         }
-        while (GLES20.glGetError() != 0) ;// absorb errors
+        // absorb errors
+        for (int errorCtr = 0; errorCtr < 100; errorCtr++) {
+            if (GLES20.glGetError() == 0) break;
+        }
         if (print) System.out.println("Maximum supported GLSL version: " + maxVersion);
         glslVersion = maxVersion;
         glslVersionString = "#version " + glslVersion + " es\n";
@@ -453,18 +478,26 @@ public class GL11 {
     }
 
     public static int glGetError() {
-        return GLES11.glGetError();
+        return ignoreErrors ? 0 : GLES11.glGetError();
     }
 
     public static void glGenTextures(int[] tex) {
         check();
         GLES11.glGenTextures(tex.length, tex, 0);
         if (print) System.out.println("glGenTextures() -> " + Arrays.toString(tex));
+        for (int i : tex) {
+            if (i < createdTexs.length) {
+                if (createdTexs[i] == i)
+                    throw new RuntimeException("glGenTextures returned " + i + " twice");
+                createdTexs[i] = i;
+            }
+        }
         check();
     }
 
     public static void glActiveTexture(int index) {
         check();
+        activeTexture = index - GL_TEXTURE0;
         GLES11.glActiveTexture(index);
         if (print) System.out.println("glActiveTexture(" + (index - GL_TEXTURE0) + ")");
         check();
@@ -472,9 +505,13 @@ public class GL11 {
 
     public static void glBindTexture(int target, int pointer) {
         check();
+        if (pointer < createdTexs.length && createdTexs[pointer] != pointer) {
+            throw new RuntimeException("Cannot bind undefined texture");
+        }
         GLES11.glBindTexture(target, pointer);
         if (print)
             System.out.println("glBindTexture(" + getTextureTarget(target) + ", " + pointer + ")");
+        boundTex[activeTexture] = pointer;
         check();
     }
 
@@ -642,6 +679,15 @@ public class GL11 {
 
     public static void glBindFramebuffer(int target, int pointer) {
         check();
+        if (pointer < 0)
+            throw new RuntimeException("Cannot bind fb " + pointer);
+        if (pointer < createdFBs.length && createdFBs[pointer] != pointer) {
+            if (createdFBs[pointer] < pointer) {
+                throw new RuntimeException("Cannot bind fb " + pointer + ", it never was created");
+            } else {
+                throw new RuntimeException("Cannot bind fb " + pointer + ", it was destroyed");
+            }
+        }
         GLES20.glBindFramebuffer(target, pointer);
         if (print)
             System.out.println("glBindFramebuffer(" + getTextureTarget(target) + ", " + pointer + ")");
@@ -659,9 +705,16 @@ public class GL11 {
     public static int glGenFramebuffers() {
         check();
         GLES20.glGenFramebuffers(1, tmpInt1, 0);
-        if (print) System.out.println("glGenFramebuffers() -> " + tmpInt1[0]);
+        int address = tmpInt1[0];
+        if (print || printFramebuffers) System.out.println("glGenFramebuffers() -> " + address);
         check();
-        return tmpInt1[0];
+        if (address >= 0 && address < createdFBs.length) {
+            if (createdFBs[address] == address) {
+                throw new RuntimeException("glGenFramebuffers() returned " + address + " twice");
+            }
+            createdFBs[address] = address;
+        }
+        return address;
     }
 
     public static void glFramebufferTexture2D(int target, int attachment, int textureTarget, int texture, int level) {
@@ -678,7 +731,8 @@ public class GL11 {
         tmpInt1[0] = buffer;
         check();
         GLES30.glDrawBuffers(1, tmpInt1, 0);
-        if (print) System.out.println("glDrawBuffers(" + getAttachment(buffer) + ")");
+        if (print)
+            System.out.println("glDrawBuffers(" + getAttachment(buffer) + ")");
         check();
     }
 
@@ -686,7 +740,8 @@ public class GL11 {
     public static void glDrawBuffers(int[] buffers) {
         check();
         GLES30.glDrawBuffers(buffers.length, buffers, 0);
-        if (print) System.out.println("glDrawBuffers(" + Arrays.toString(buffers) + ")");
+        if (print)
+            System.out.println("glDrawBuffers(" + Arrays.toString(buffers) + ")");
         check();
     }
 
@@ -708,14 +763,23 @@ public class GL11 {
         if (print)
             System.out.println("glCheckNamedFramebufferStatus(" + pointer + ", " + getTextureTarget(target) + ") -> " + status);
         check();
+        // maybe... doesn't help either...
+        /*if (status == GLES20.GL_FRAMEBUFFER_COMPLETE) {
+            GLES20.glClear(-1);
+        }*/
         return status;
     }
 
     public static void glDeleteFramebuffers(int framebuffer) {
+        if (framebuffer < createdFBs.length && createdFBs[framebuffer] != framebuffer)
+            throw new RuntimeException("Cannot delete non-existing framebuffer");
+        if (framebuffer < createdFBs.length) createdFBs[framebuffer]++;
+        if (boundFramebuffer == framebuffer)
+            throw new RuntimeException("Cannot delete a bound framebuffer");
         tmpInt1[0] = framebuffer;
         check();
         GLES20.glDeleteFramebuffers(1, tmpInt1, 0);
-        if (print) System.out.println("glDeleteFramebuffers(" + framebuffer + ")");
+        if (print || printDeletes) System.out.println("glDeleteFramebuffers(" + framebuffer + ")");
         check();
     }
 
@@ -794,6 +858,7 @@ public class GL11 {
     public static void glDeleteShader(int shader) {
         check();
         GLES20.glDeleteShader(shader);
+        if (print || printDeletes) System.out.println("glDeleteShader(" + shader + ")");
         check();
     }
 
@@ -828,10 +893,25 @@ public class GL11 {
         check();
     }
 
+    public static void glUniform2i(int uniform, int x, int y) {
+        check();
+        GLES20.glUniform2i(uniform, x, y);
+        if (print) System.out.println("glUniform2i(" + uniform + ", " + x + ", " + y + ")");
+        check();
+    }
+
     public static void glUniform2f(int uniform, float x, float y) {
         check();
         GLES20.glUniform2f(uniform, x, y);
         if (print) System.out.println("glUniform2f(" + uniform + ", " + x + ", " + y + ")");
+        check();
+    }
+
+    public static void glUniform3i(int uniform, int x, int y, int z) {
+        check();
+        GLES20.glUniform3i(uniform, x, y, z);
+        if (print)
+            System.out.println("glUniform3i(" + uniform + ", " + x + ", " + y + ", " + z + ")");
         check();
     }
 
@@ -848,6 +928,14 @@ public class GL11 {
         GLES20.glUniform3fv(uniform, data.remaining() / 3, data);
         if (print)
             System.out.println("glUniform3fv(" + uniform + ", " + data.remaining() / 3 + ", " + data + ")");
+        check();
+    }
+
+    public static void glUniform4i(int uniform, int x, int y, int z, int w) {
+        check();
+        GLES20.glUniform4i(uniform, x, y, z, w);
+        if (print)
+            System.out.println("glUniform4i(" + uniform + ", " + x + ", " + y + ", " + z + ", " + w + ")");
         check();
     }
 
@@ -943,7 +1031,7 @@ public class GL11 {
         check();
         tmpInt1[0] = i;
         GLES20.glDeleteBuffers(1, tmpInt1, 0);
-        if (print) System.out.println("glDeleteBuffers(" + i + ")");
+        if (print || printDeletes) System.out.println("glDeleteBuffers(" + i + ")");
         check();
     }
 
@@ -990,7 +1078,7 @@ public class GL11 {
         check();
         tmpInt1[0] = i;
         GLES30.glDeleteVertexArrays(1, tmpInt1, 0);
-        if (print) System.out.println("glDeleteVertexArrays(" + i + ")");
+        if (print || printDeletes) System.out.println("glDeleteVertexArrays(" + i + ")");
         check();
     }
 
@@ -1088,7 +1176,21 @@ public class GL11 {
 
     public static void glDeleteTextures(int[] textures) {
         check();
+        for (int i : textures) {
+            if (i < createdTexs.length) {
+                if (createdTexs[i] == i) {
+                    createdTexs[i]++;
+                } else throw new RuntimeException("Cannot delete texture " + i + "twice");
+            }
+            for (int j : boundTex) {
+                if (i == j) {
+                    System.out.println("Cannot delete bound texture " + i);
+                }
+            }
+        }
         GLES20.glDeleteTextures(textures.length, textures, 0);
+        if (print || printDeletes)
+            System.out.println("glDeleteTexture(" + Arrays.toString(textures) + ")");
         check();
     }
 
@@ -1131,8 +1233,22 @@ public class GL11 {
     public static void glScissor(int x, int y, int w, int h) {
         check();
         if (print) System.out.println("glScissor(" + x + ", " + y + ", " + w + ", " + h + ")");
-        GLES20.glScissor(x, y, w, h);
+        GLES11.glScissor(x, y, w, h);
         check();
+    }
+
+    public static String glGetString(int name) {
+        return GLES11.glGetString(name);
+    }
+
+    public static void glReadPixels(int x, int y, int w, int h, int format, int type, int[] buffer) {
+        // could be optimized to use a static temporary buffer
+        ByteBuffer tmp = ByteBuffer.allocateDirect(buffer.length * 4);
+        tmp.order(ByteOrder.nativeOrder());
+        GLES11.glReadPixels(x, y, w, h, format, type, tmp);
+        tmp.position(0);
+        tmp.asIntBuffer().get(buffer);
+        MemoryUtil.memFree(tmp);
     }
 
 }

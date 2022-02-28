@@ -7,6 +7,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 public class ImageIO {
 
@@ -20,6 +22,10 @@ public class ImageIO {
         Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
         if (bitmap == null) throw new IOException("Image could not be decoded");
         return new BufferedImage(bitmap);
+    }
+
+    public static Iterator<ImageReader> getImageReadersBySuffix(String suffix) {
+        return new ArrayList<ImageReader>().iterator();
     }
 
 }

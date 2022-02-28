@@ -1,5 +1,6 @@
 package java.awt;
 
+@SuppressWarnings("unused")
 public class Color {
 
     int argb;
