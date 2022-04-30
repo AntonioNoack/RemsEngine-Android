@@ -1,5 +1,5 @@
 package org.lwjgl.openal;
 
 @SuppressWarnings("unused")
-public class ALC extends AL {
+public class AL10 extends ALC {
 }

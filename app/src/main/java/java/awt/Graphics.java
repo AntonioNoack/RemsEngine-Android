@@ -57,6 +57,7 @@ public class Graphics {
             paint.setTypeface(Typeface.create(font.name, font.flags));
             paint.setTextAlign(Paint.Align.LEFT);
             paint.setTextSize(font.size);
+            paint.setAntiAlias(true);
         }
     }
 

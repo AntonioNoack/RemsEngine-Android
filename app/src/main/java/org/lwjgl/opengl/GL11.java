@@ -249,7 +249,9 @@ public class GL11 {
     public static void glBindTexture(int target, int pointer) {
         check();
         if (pointer < createdTextures.length && createdTextures[pointer] != pointer) {
-            throw new RuntimeException("Cannot bind undefined texture");
+            // may be called after a new session; idk, may be an engine bug
+            new RuntimeException("Cannot bind undefined texture").printStackTrace();
+            return;
         }
         GLES11.glBindTexture(target, pointer);
         if (print || printTexBinds)
@@ -987,6 +989,8 @@ public class GL11 {
             // not yet implemented???
             try {
                 GLES32.glDebugMessageCallback(callbackI);
+            } catch (UnsupportedOperationException e) {
+                System.out.println("[WARN] glDebugMessageCallback is not supported");
             } catch (Exception e) {
                 e.printStackTrace();
             }
