@@ -7,9 +7,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Iterator;
 
+@SuppressWarnings("unused")
 public class ImageIO {
 
     public static BufferedImage read(InputStream inputStream) throws IOException {
@@ -25,7 +25,19 @@ public class ImageIO {
     }
 
     public static Iterator<ImageReader> getImageReadersBySuffix(String suffix) {
-        return new ArrayList<ImageReader>().iterator();
+        return emptyIterator;
     }
+
+    private static final Iterator<ImageReader> emptyIterator = new Iterator<ImageReader>() {
+        @Override
+        public boolean hasNext() {
+            return false;
+        }
+
+        @Override
+        public ImageReader next() {
+            return null;
+        }
+    };
 
 }

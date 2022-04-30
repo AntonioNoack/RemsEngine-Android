@@ -3,10 +3,7 @@ package java.awt;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.graphics.Typeface;
-import android.graphics.Xfermode;
 
 import org.joml.Matrix4fArrayList;
 import org.joml.Vector3f;
@@ -70,6 +67,7 @@ public class Graphics {
 
     public void setRenderingHints(Map<RenderingHints.Key, Object> map) {
         // could be used for subpixel rendering hints, if they exist for Android
+        // todo set subpixel yes/no for rendering fonts
     }
 
     public FontMetrics getFontMetrics() {

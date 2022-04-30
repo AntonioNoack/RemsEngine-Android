@@ -5,10 +5,10 @@ import android.graphics.Paint;
 @SuppressWarnings("unused")
 public class FontMetrics {
 
-    int height;
-    float ascent, descent;
-    float leading, top, bottom;
-    protected Font font;
+    final int height;
+    final float ascent, descent;
+    final float leading, top, bottom;
+    final protected Font font;
 
     public FontMetrics(Graphics g, Font font) {
         this.font = font;

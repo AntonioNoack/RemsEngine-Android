@@ -5,6 +5,6 @@ import android.os.Build;
 
 import androidx.annotation.RequiresApi;
 
-@RequiresApi(api = Build.VERSION_CODES.N)
+@RequiresApi(api = 24)
 public interface GLDebugMessageCallbackI extends GLES32.DebugProc {
 }

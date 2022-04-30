@@ -5,12 +5,10 @@ import android.graphics.Bitmap;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
-import me.anno.remsengine.R;
-
 @SuppressWarnings("unused")
 public class BufferedImage {
 
-    public int width, height, type;
+    public final int width, height, type;
     private final Graphics2D graphics = new Graphics2D(this);
     private final WritableRaster raster = new WritableRaster();
 

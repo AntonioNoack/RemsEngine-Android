@@ -4,8 +4,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import me.anno.language.Language;
 
+@SuppressWarnings("unused")
 public class BundledSpellcheck {
 
+    @SuppressWarnings("CommentedOutCode")
     public static void runInstance(Language language, ConcurrentLinkedQueue<Request> queue) {
         /*try {
             CommandLine instance = new CommandLine(language.getCode());

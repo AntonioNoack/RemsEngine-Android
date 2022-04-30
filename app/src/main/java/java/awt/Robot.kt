@@ -1,4 +1,4 @@
 package java.awt
 
-@SuppressWarnings("unused")
+@Suppress("unused")
 class Robot

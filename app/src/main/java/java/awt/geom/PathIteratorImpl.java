@@ -2,14 +2,15 @@ package java.awt.geom;
 
 import java.awt.Shape;
 
+@SuppressWarnings("unused")
 public class PathIteratorImpl implements PathIterator {
 
     private final Shape shape;
-    private final AffineTransform transform;
+    // private final AffineTransform transform;
 
     public PathIteratorImpl(Shape shape, AffineTransform transform) {
         this.shape = shape;
-        this.transform = transform;
+        // this.transform = transform;
     }
 
     private int opIndex = 0;
@@ -66,10 +67,6 @@ public class PathIteratorImpl implements PathIterator {
                 break;
         }
         return op;
-    }
-
-    private void transform(float[] data, int length) {
-        // todo transform all points
     }
 
     @Override

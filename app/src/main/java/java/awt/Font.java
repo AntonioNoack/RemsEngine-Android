@@ -1,5 +1,8 @@
 package java.awt;
 
+import android.graphics.Paint;
+import android.os.Build;
+
 @SuppressWarnings("unused")
 public class Font {
 
@@ -41,6 +44,14 @@ public class Font {
     }
 
     public boolean canDisplay(int charCode) {
+        if (Build.VERSION.SDK_INT >= 23) {
+            // will consider fallback fonts as well,
+            // so this will behave independent on the font
+            // this is not ideal, but it's something
+            Paint paint = new Paint();
+            return paint.hasGlyph(new String(Character.toChars(charCode)));
+        }
+        // else we don't know
         return true;
     }
 

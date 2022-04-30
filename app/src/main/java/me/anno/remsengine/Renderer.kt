@@ -27,7 +27,7 @@ class Renderer : GLSurfaceView.Renderer {
 
     @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-        GFX.glThread = Thread.currentThread();
+        GFX.glThread = Thread.currentThread()
         OpenGL.newSession()
         GL11.invalidateBinding()
         GL11.testShaderVersions()
@@ -38,9 +38,10 @@ class Renderer : GLSurfaceView.Renderer {
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
-        if (width != GFX.width || height != GFX.height) {
-            GFX.width = width
-            GFX.height = height
+        val window = GFX.someWindow
+        if (width != window.width || height != window.height) {
+            window.width = width
+            window.height = height
             StudioBase.addEvent { Input.invalidateLayout() }
         }
     }
@@ -57,13 +58,17 @@ class Renderer : GLSurfaceView.Renderer {
         try {
             // neither true nor false work without issues
             DefaultConfig["ui.sparseRedraw"] = true
+            // frame isn't kept on Android :/
+            GFX.windows.forEach { it.needsRefresh = true }
             GFX.glThread = Thread.currentThread()
             invalidateOpenGLES()
+            val windowX = GFX.someWindow
+            GFX.activeWindow = windowX
             when (frameIndex++) {
                 0 -> {
                     GFX.check()
                     GFX.setProperty("capabilities", GL.getCapabilities())
-                    GFX.renderFrame0()
+                    GFX.renderFrame0(windowX)
                     KeyMap.defineKeys()
                     DefaultStyle.baseTheme["fontSize", "dark"] = 25
                     DefaultStyle.baseTheme["fontSize", "light"] = 25
@@ -79,14 +84,14 @@ class Renderer : GLSurfaceView.Renderer {
                         GFX.maxSamples = 1
                     }
                     GFX.check()
-                    GFX.gameInit.invoke()
+                    GFX.onInit?.invoke()
                     GFX.check()
                 }
                 else -> {
                     GFX.check()
-                    GFX.renderStep()
+                    GFX.renderStep(windowX)
                     // draw the cursor for debug purposes
-                    DrawRectangles.drawRect(Input.mouseX.toInt(), Input.mouseY.toInt(), 6, 6, -1)
+                    DrawRectangles.drawRect(windowX.mouseX.toInt(), windowX.mouseY.toInt(), 6, 6, -1)
                     GFX.check()
                 }
             }

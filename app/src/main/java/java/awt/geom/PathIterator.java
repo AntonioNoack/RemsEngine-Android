@@ -1,5 +1,6 @@
 package java.awt.geom;
 
+@SuppressWarnings({"unused", "SameReturnValue"})
 public interface PathIterator {
 
     int WIND_EVEN_ODD = 0;

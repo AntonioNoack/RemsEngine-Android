@@ -9,8 +9,6 @@ import me.anno.remsengine.MainActivity.Companion.GLFW_MOUSE_BUTTON_RIGHT
 
 object KeyMap {
 
-    private val Char.code get() = toInt()
-
     private fun put(key: Int, vararg buttons: String) {
         for (button in buttons) {
             KeyCombination.put(key, button)

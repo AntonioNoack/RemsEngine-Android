@@ -1,11 +1,8 @@
 package java.awt.font;
 
 import static java.awt.geom.PathIterator.SEG_CLOSE;
-import static java.awt.geom.PathIterator.SEG_CUBICTO;
 import static java.awt.geom.PathIterator.SEG_LINETO;
 import static java.awt.geom.PathIterator.SEG_MOVETO;
-import static java.awt.geom.PathIterator.SEG_QUADTO;
-import static java.lang.Math.abs;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -19,12 +16,9 @@ import java.awt.Font;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
-import java.util.BitSet;
 import java.util.List;
 
 import me.anno.maths.geometry.MarchingSquares;
-import me.anno.utils.structures.arrays.FloatArrayList;
-import me.anno.utils.structures.arrays.IntArrayList;
 
 @SuppressWarnings("unused")
 public class TextLayout {
@@ -34,17 +28,13 @@ public class TextLayout {
     private final float ascent, descent;
 
     private final String text;
-    private final Font font;
-    private final Typeface typeface;
     private final Paint paint = new Paint();
     private final Rect rect = new Rect();
 
     public TextLayout(String text, Font font, FontRenderContext context) {
         this.text = text;
-        this.font = font;
-        typeface = Typeface.create(font.name, font.flags);
         paint.setTextAlign(Paint.Align.LEFT);
-        paint.setTypeface(typeface);
+        paint.setTypeface(Typeface.create(font.name, font.flags));
         paint.setTextSize(font.size);
         Paint.FontMetrics fm = paint.getFontMetrics();
         paint.getTextBounds(text, 0, text.length(), rect);

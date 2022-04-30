@@ -1,4 +1,5 @@
 package org.lwjgl.opengl;
 
-public class GL33 extends GL30 {
+@SuppressWarnings("unused")
+public class GL33 extends GL32 {
 }

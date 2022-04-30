@@ -3,7 +3,7 @@ package java.awt;
 @SuppressWarnings("unused")
 public class Color {
 
-    int argb;
+    final int argb;
 
     public Color(int argb) {
         this.argb = argb;

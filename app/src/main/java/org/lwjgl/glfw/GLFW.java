@@ -2,23 +2,24 @@ package org.lwjgl.glfw;
 
 import me.anno.remsengine.MainActivity;
 
+@SuppressWarnings("unused")
 public class GLFW {
 
-    public static void glfwTerminate() {
-        // why...
-    }
+    public static void glfwTerminate() { }
 
     public static long glfwCreateStandardCursor(int mode) {
-        return (long) mode;
+        return mode;
     }
 
+    @SuppressWarnings("SameReturnValue")
     public static boolean glfwJoystickPresent(int index) {
+        // to do check for controller whether it's available
+        // our controller or method to connect the two is not compatible ... -> do this later
         return false;
     }
 
-    public static void glfwSetCursor(long window, long cursor) {
-        // todo change cursor???
-    }
+    // change cursor? can we do that for Android mice?
+    public static void glfwSetCursor(long window, long cursor) { }
 
     public static void glfwGetCursorPos(long window, double[] x, double[] y) {
         x[0] = MainActivity.Companion.getLastMouseX();

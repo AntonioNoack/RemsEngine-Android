@@ -1,5 +1,5 @@
 package org.lwjgl.opengl;
 
 @SuppressWarnings("unused")
-public class GL20 extends GL15 {
+public class GL43C extends GL43 {
 }

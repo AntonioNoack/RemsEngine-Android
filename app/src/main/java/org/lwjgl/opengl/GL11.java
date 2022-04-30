@@ -1,85 +1,38 @@
 package org.lwjgl.opengl;
 
 import static android.opengl.GLES10.GL_ALPHA_TEST;
-import static android.opengl.GLES10.GL_BYTE;
-import static android.opengl.GLES10.GL_CLAMP_TO_EDGE;
-import static android.opengl.GLES10.GL_FALSE;
-import static android.opengl.GLES10.GL_FLOAT;
-import static android.opengl.GLES10.GL_LINEAR;
-import static android.opengl.GLES10.GL_LINEAR_MIPMAP_LINEAR;
-import static android.opengl.GLES10.GL_LINEAR_MIPMAP_NEAREST;
-import static android.opengl.GLES10.GL_LINES;
-import static android.opengl.GLES10.GL_LINE_STRIP;
 import static android.opengl.GLES10.GL_LUMINANCE;
-import static android.opengl.GLES10.GL_LUMINANCE_ALPHA;
 import static android.opengl.GLES10.GL_MULTISAMPLE;
-import static android.opengl.GLES10.GL_NEAREST;
-import static android.opengl.GLES10.GL_NEAREST_MIPMAP_LINEAR;
-import static android.opengl.GLES10.GL_NEAREST_MIPMAP_NEAREST;
-import static android.opengl.GLES10.GL_REPEAT;
 import static android.opengl.GLES10.GL_RGB;
 import static android.opengl.GLES10.GL_RGBA;
-import static android.opengl.GLES10.GL_SHORT;
 import static android.opengl.GLES10.GL_TEXTURE0;
-import static android.opengl.GLES10.GL_TEXTURE_2D;
-import static android.opengl.GLES10.GL_TEXTURE_MAG_FILTER;
-import static android.opengl.GLES10.GL_TEXTURE_MIN_FILTER;
-import static android.opengl.GLES10.GL_TEXTURE_WRAP_S;
-import static android.opengl.GLES10.GL_TEXTURE_WRAP_T;
-import static android.opengl.GLES10.GL_TRIANGLE_FAN;
-import static android.opengl.GLES10.GL_TRIANGLE_STRIP;
-import static android.opengl.GLES10.GL_TRUE;
-import static android.opengl.GLES10.GL_UNSIGNED_BYTE;
-import static android.opengl.GLES10.GL_UNSIGNED_SHORT;
 import static android.opengl.GLES11.GL_GENERATE_MIPMAP;
-import static android.opengl.GLES20.GL_ARRAY_BUFFER;
-import static android.opengl.GLES20.GL_COLOR_ATTACHMENT0;
-import static android.opengl.GLES20.GL_DEPTH_ATTACHMENT;
 import static android.opengl.GLES20.GL_DEPTH_COMPONENT;
 import static android.opengl.GLES20.GL_DEPTH_COMPONENT16;
-import static android.opengl.GLES20.GL_DYNAMIC_DRAW;
-import static android.opengl.GLES20.GL_ELEMENT_ARRAY_BUFFER;
-import static android.opengl.GLES20.GL_FRAMEBUFFER;
-import static android.opengl.GLES20.GL_INT;
-import static android.opengl.GLES20.GL_NONE;
-import static android.opengl.GLES20.GL_STATIC_DRAW;
-import static android.opengl.GLES20.GL_STENCIL_ATTACHMENT;
-import static android.opengl.GLES20.GL_STREAM_DRAW;
-import static android.opengl.GLES20.GL_TEXTURE_CUBE_MAP;
 import static android.opengl.GLES20.GL_UNSIGNED_INT;
 import static android.opengl.GLES20.GL_VALIDATE_STATUS;
 import static android.opengl.GLES20.GL_VERTEX_SHADER;
-import static android.opengl.GLES30.GL_COLOR_ATTACHMENT15;
-import static android.opengl.GLES30.GL_DEPTH_COMPONENT32F;
-import static android.opengl.GLES30.GL_DEPTH_STENCIL_ATTACHMENT;
-import static android.opengl.GLES30.GL_PIXEL_PACK_BUFFER;
-import static android.opengl.GLES30.GL_PIXEL_UNPACK_BUFFER;
-import static android.opengl.GLES30.GL_R8;
-import static android.opengl.GLES30.GL_RG;
-import static android.opengl.GLES30.GL_RG8;
-import static android.opengl.GLES30.GL_RGB16F;
-import static android.opengl.GLES30.GL_RGB32F;
 import static android.opengl.GLES30.GL_RGB8;
-import static android.opengl.GLES30.GL_RGBA16F;
-import static android.opengl.GLES30.GL_RGBA32F;
-import static android.opengl.GLES30.GL_RGBA8;
-import static android.opengl.GLES30.GL_TEXTURE_3D;
-import static android.opengl.GLES30.GL_TEXTURE_WRAP_R;
-import static android.opengl.GLES31.GL_TEXTURE_2D_MULTISAMPLE;
 
-import static java.util.Collections.emptyList;
-import static javax.microedition.khronos.opengles.GL11ExtensionPack.GL_DEPTH_COMPONENT32;
-import static javax.microedition.khronos.opengles.GL11ExtensionPack.GL_MIRRORED_REPEAT;
+import static org.lwjgl.opengl.GLStrings.getAttachment;
+import static org.lwjgl.opengl.GLStrings.getBufferTarget;
+import static org.lwjgl.opengl.GLStrings.getBufferUsage;
+import static org.lwjgl.opengl.GLStrings.getDrawMode;
+import static org.lwjgl.opengl.GLStrings.getFormat;
+import static org.lwjgl.opengl.GLStrings.getTexKey;
+import static org.lwjgl.opengl.GLStrings.getTexValue;
+import static org.lwjgl.opengl.GLStrings.getTextureTarget;
+import static org.lwjgl.opengl.GLStrings.getType;
 
 import android.opengl.GLES11;
 import android.opengl.GLES20;
 import android.opengl.GLES30;
+import android.opengl.GLES31;
+import android.opengl.GLES32;
 import android.os.Build;
 
 import androidx.annotation.RequiresApi;
 
-import org.joml.Matrix4f;
-import org.joml.Vector4f;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
@@ -87,16 +40,10 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
+import me.anno.OpenGLLegacy;
 import me.anno.gpu.GFX;
-import me.anno.gpu.buffer.Attribute;
-import me.anno.gpu.buffer.StaticBuffer;
-import me.anno.gpu.shader.GLSLType;
-import me.anno.gpu.shader.Shader;
-import me.anno.gpu.shader.builder.Variable;
 import me.anno.gpu.texture.Texture2D;
 import me.anno.utils.Warning;
 
@@ -104,16 +51,18 @@ import me.anno.utils.Warning;
 public class GL11 {
 
     private static final boolean print = false;
-    private static final boolean printFramebuffers = true;
+    private static final boolean printFramebuffers = false;
     private static final boolean printDeletes = false;
-    public static final boolean ignoreErrors = true;
+    private static final boolean printTexBinds = false;
+    private static final boolean ignoreErrors = true;
+    private static final int testVersionBecauseAndroidStudioBuggy = 0;
 
     public static final int GL_COLOR_BUFFER_BIT = GLES11.GL_COLOR_BUFFER_BIT;
     public static final int GL_DEPTH_BUFFER_BIT = GLES11.GL_DEPTH_BUFFER_BIT;
     public static final int GL_STENCIL_BUFFER_BIT = GLES11.GL_STENCIL_BUFFER_BIT;
 
     public static final int GL_TRIANGLES = GLES11.GL_TRIANGLES;
-    public static final int GL_QUADS = 7;// why is this missing for OpenGL ES?
+    public static final int GL_QUADS = 7;// why is this missing for OpenGL ES? legacy, even in normal OpenGL
 
     public static final int GL_DEBUG_OUTPUT = 0x92E0;
     public static final int GL_TEXTURE_SWIZZLE_RGBA = 36422;// since OpenGL ES 3.3, which somehow isn't part of Android...
@@ -123,12 +72,16 @@ public class GL11 {
 
     // OpenGL is single-threaded, so we can use this static instance
     private static final int[] tmpInt1 = new int[1];
-    private static final int[] createdFBs = new int[65536];
-    private static final int[] createdTexs = new int[65536];
-    private static final int[] boundTex = new int[64];
+    private static final int[] createdFramebuffers = new int[65536];
+    private static final int[] createdTextures = new int[65536];
+    private static final int[] boundTextures = new int[64];
     private static int activeTexture = 0;
+    private static int boundFramebuffer, boundProgram;
 
     public static int major, minor, version10x;
+    public static int glslVersion = 0;
+
+    private static String glslVersionString;
 
     public static void setVersion(int major, int minor) {
         GL11.major = major;
@@ -136,51 +89,12 @@ public class GL11 {
         version10x = major * 10 + minor;// 3.1 -> 31
     }
 
-    static class Point {
-        float x, y, z;
-        float r, g, b;
-    }
-
     public static void invalidateBinding() {
-        Arrays.fill(createdFBs, 0);
-        Arrays.fill(createdTexs, 0);
-        Arrays.fill(boundTex, 0);
+        Arrays.fill(createdFramebuffers, 0);
+        Arrays.fill(createdTextures, 0);
+        Arrays.fill(boundTextures, 0);
+        if (printTexBinds) System.out.println("Cleared all bindings");
         activeTexture = 0;
-    }
-
-    private static int boundFramebuffer, boundProgram;
-
-    private static final ArrayList<Point> gl1Triangles = new ArrayList<>();
-    private static final ArrayList<Attribute> gl1Attributes = new ArrayList<>();
-    private static final Matrix4f gl1ModelMatrix = new Matrix4f();
-    private static final Matrix4f gl1CameraMatrix = new Matrix4f();
-    private static final Shader gl1Shader;
-    private static final Vector4f gl1Color = new Vector4f();
-    private static int gl1MatrixMode;
-    private static int gl1DrawMode;
-
-    static {
-        ArrayList<Variable> varyings = new ArrayList<>(1);
-        varyings.add(new Variable(GLSLType.V3F, "color"));
-        ArrayList<Variable> attributes = new ArrayList<>(2);
-        attributes.add(new Variable(GLSLType.V3F, "pos"));
-        attributes.add(new Variable(GLSLType.V3F, "col"));
-        ArrayList<Variable> vsUniforms = new ArrayList<>(2);
-        vsUniforms.add(new Variable(GLSLType.M4x4, "cameraMatrix"));
-        vsUniforms.add(new Variable(GLSLType.M4x4, "modelMatrix"));
-        List<Variable> fsUniforms = emptyList();
-        gl1Shader = new Shader(
-                "OpenGL1", attributes, vsUniforms, "" +
-                "void main(){\n" +
-                "   gl_Position = cameraMatrix * modelMatrix * vec4(pos, 1.0);\n" +
-                "   color = col;\n" +
-                "}", varyings, fsUniforms, "" +
-                "void main(){\n" +
-                "   gl_FragColor = vec4(color, 1.0);\n" +
-                "}"
-        );
-        gl1Attributes.add(new Attribute("pos", 3));
-        gl1Attributes.add(new Attribute("col", 3));
     }
 
     protected static void check(int mode) {
@@ -198,153 +112,6 @@ public class GL11 {
             System.exit(error);
         }
     }
-
-    private static String getDrawMode(int mode) {
-        switch (mode) {
-            case GL_TRIANGLES:
-                return "TRIANGLES";
-            case GL_TRIANGLE_FAN:
-                return "TRIANGLE_FAN";
-            case GL_TRIANGLE_STRIP:
-                return "TRIANGLE_STRIP";
-            case GL_QUADS:
-                return "QUADS";
-            case GL_LINES:
-                return "LINES";
-            case GL_LINE_STRIP:
-                return "LINE_STRIP";
-            default:
-                return mode + "";
-        }
-    }
-
-    private static String getTextureTarget(int target) {
-        switch (target) {
-            case GL_TEXTURE_2D:
-                return "TEXTURE_2D";
-            case GL_TEXTURE_2D_MULTISAMPLE:
-                return "TEXTURE_2D_MULTISAMPLE";
-            case GL_TEXTURE_3D:
-                return "TEXTURE_3D";
-            case GL_TEXTURE_CUBE_MAP:
-                return "TEXTURE_CUBE_MAP";
-            case GL_FRAMEBUFFER:
-                return "FRAMEBUFFER";
-            default:
-                return target + "";
-        }
-    }
-
-    private static String getAttachment(int attachment) {
-        if (attachment >= GL_COLOR_ATTACHMENT0 && attachment <= GL_COLOR_ATTACHMENT15) {
-            return "COLOR_ATTACHMENT" + (attachment - GL_COLOR_ATTACHMENT0);
-        }
-        switch (attachment) {
-            case GL_NONE:
-                return "NONE";
-            case GL_DEPTH_ATTACHMENT:
-                return "DEPTH_ATTACHMENT";
-            case GL_STENCIL_ATTACHMENT:
-                return "STENCIL_ATTACHMENT";
-            case GL_DEPTH_STENCIL_ATTACHMENT:
-                return "DEPTH_STENCIL_ATTACHMENT";
-            default:
-                return attachment + "";
-        }
-    }
-
-    private static String getBufferTarget(int target) {
-        switch (target) {
-            case GL_ARRAY_BUFFER:
-                return "ARRAY_BUFFER";
-            case GL_ELEMENT_ARRAY_BUFFER:
-                return "ELEMENT_ARRAY_BUFFER";
-            case GL_PIXEL_PACK_BUFFER:
-                return "PIXEL_PACK_BUFFER";
-            case GL_PIXEL_UNPACK_BUFFER:
-                return "PIXEL_UNPACK_BUFFER";
-            default:
-                return target + "";
-        }
-    }
-
-    private static String getBufferUsage(int target) {
-        switch (target) {
-            case GL_STATIC_DRAW:
-                return "STATIC_DRAW";
-            case GL_DYNAMIC_DRAW:
-                return "DYNAMIC_DRAW";
-            case GL_STREAM_DRAW:
-                return "STREAM_DRAW";
-            default:
-                return target + "";
-        }
-    }
-
-    private static String getType(int type) {
-        switch (type) {
-            case GL_UNSIGNED_BYTE:
-                return "UNSIGNED_BYTE";
-            case GL_UNSIGNED_SHORT:
-                return "UNSIGNED_SHORT";
-            case GL_UNSIGNED_INT:
-                return "UNSIGNED_INT";
-            case GL_FLOAT:
-                return "FLOAT";
-            case GL_BYTE:
-                return "BYTE";
-            case GL_SHORT:
-                return "SHORT";
-            case GL_INT:
-                return "INT";
-            default:
-                return type + "";
-        }
-    }
-
-    private static String getFormat(int format) {
-        switch (format) {
-            case GL_LUMINANCE:
-                return "LUMINANCE";
-            case GL_LUMINANCE_ALPHA:
-                return "LUMINANCE_ALPHA";
-            case GL_R8:
-                return "R8";
-            case GL_RG:
-                return "RG";
-            case GL_RG8:
-                return "RG8";
-            case GL_RGB:
-                return "RGB";
-            case GL_RGB8:
-                return "RGB8";
-            case GL_RGBA:
-                return "RGBA";
-            case GL_RGBA8:
-                return "RGBA8";
-            case GL_RGB16F:
-                return "RGB16F";
-            case GL_RGBA16F:
-                return "RGBA16F";
-            case GL_RGB32F:
-                return "RGB32F";
-            case GL_RGBA32F:
-                return "RGBA32F";
-            case GL_DEPTH_COMPONENT:
-                return "DEPTH_COMPONENT";
-            case GL_DEPTH_COMPONENT16:
-                return "DEPTH_COMPONENT16";
-            case GL_DEPTH_COMPONENT32:
-                return "DEPTH_COMPONENT32";
-            case GL_DEPTH_COMPONENT32F:
-                return "DEPTH_COMPONENT32F";
-            default:
-                return format + "";
-        }
-    }
-
-    public static int glslVersion = 0;
-    private static String glslVersionString;
 
     public static void testShaderVersions() {
         check();
@@ -384,19 +151,15 @@ public class GL11 {
     }
 
     public static void glMatrixMode(int mode) {
-        gl1MatrixMode = mode;
-    }
-
-    private static Matrix4f getGL1Matrix() {
-        return gl1MatrixMode == GL_PROJECTION ? gl1CameraMatrix : gl1ModelMatrix;
+        OpenGLLegacy.INSTANCE.glMatrixMode(mode);
     }
 
     public static void glLoadIdentity() {
-        getGL1Matrix().identity();
+        OpenGLLegacy.INSTANCE.loadIdentity();
     }
 
     public static void glOrtho(float x0, float x1, float y0, float y1, float z0, float z1) {
-        getGL1Matrix().ortho(x0, x1, y0, y1, z0, z1);
+        OpenGLLegacy.INSTANCE.ortho(x0, x1, y0, y1, z0, z1);
     }
 
     public static void glOrtho(double x0, double x1, double y0, double y1, double z0, double z1) {
@@ -404,43 +167,23 @@ public class GL11 {
     }
 
     public static void glColor3f(float r, float g, float b) {
-        gl1Color.set(r, g, b);
+        OpenGLLegacy.INSTANCE.color(r, g, b);
     }
 
     public static void glBegin(int mode) {
-        gl1Triangles.clear();
-        gl1DrawMode = mode;
+        OpenGLLegacy.INSTANCE.begin(mode);
     }
 
     public static void glEnd() {
-        // create a new buffer
-        StaticBuffer sb = new StaticBuffer(gl1Attributes, gl1Triangles.size(), GL_STATIC_DRAW);
-        for (Point p : gl1Triangles) {
-            sb.put(p.x, p.y, p.z);
-            sb.put(p.r, p.g, p.b);
-        }
-        sb.setDrawMode(gl1DrawMode);
-        Shader shader = gl1Shader;
-        shader.use();
-        shader.m4x4("cameraMatrix", gl1CameraMatrix);
-        shader.m4x4("modelMatrix", gl1ModelMatrix);
-        sb.draw(shader);
-        sb.destroy();
+        OpenGLLegacy.INSTANCE.end();
     }
 
     public static void glVertex2f(float x, float y) {
-        Point p = new Point();
-        p.x = x;
-        p.y = y;
-        p.z = 0f;
-        p.r = gl1Color.x;
-        p.g = gl1Color.y;
-        p.b = gl1Color.z;
-        gl1Triangles.add(p);
+        OpenGLLegacy.INSTANCE.vertex(x, y);
     }
 
     public static void glRotatef(float a, float x, float y, float z) {
-        getGL1Matrix().rotate(a, x, y, z);
+        OpenGLLegacy.INSTANCE.rotate(a, x, y, z);
     }
 
     public static void glEnable(int flags) {
@@ -486,10 +229,10 @@ public class GL11 {
         GLES11.glGenTextures(tex.length, tex, 0);
         if (print) System.out.println("glGenTextures() -> " + Arrays.toString(tex));
         for (int i : tex) {
-            if (i < createdTexs.length) {
-                if (createdTexs[i] == i)
+            if (i < createdTextures.length) {
+                if (createdTextures[i] == i)
                     throw new RuntimeException("glGenTextures returned " + i + " twice");
-                createdTexs[i] = i;
+                createdTextures[i] = i;
             }
         }
         check();
@@ -505,13 +248,13 @@ public class GL11 {
 
     public static void glBindTexture(int target, int pointer) {
         check();
-        if (pointer < createdTexs.length && createdTexs[pointer] != pointer) {
+        if (pointer < createdTextures.length && createdTextures[pointer] != pointer) {
             throw new RuntimeException("Cannot bind undefined texture");
         }
         GLES11.glBindTexture(target, pointer);
-        if (print)
-            System.out.println("glBindTexture(" + getTextureTarget(target) + ", " + pointer + ")");
-        boundTex[activeTexture] = pointer;
+        if (print || printTexBinds)
+            System.out.println("glBindTexture[" + activeTexture + "](" + getTextureTarget(target) + ", " + pointer + ")");
+        boundTextures[activeTexture] = pointer;
         check();
     }
 
@@ -554,6 +297,18 @@ public class GL11 {
         check();
     }
 
+    public static void glTexImage2DMultisample(int target, int samples, int internalFormat, int width, int height, boolean fixedSamplePositions) {
+        if (Build.VERSION.SDK_INT >= 21) {
+            check();
+            GLES31.glTexStorage2DMultisample(target, samples, internalFormat, width, height, fixedSamplePositions);
+            if (print)
+                System.out.println("glTexImage2DMultisample(" + getTextureTarget(target) +
+                        ", internal " + getFormat(internalFormat) + ", " + width + " x " + height + ", fixed?: " + fixedSamplePositions);
+            check();
+        } else
+            throw new RuntimeException("Operation glTexImage2DMultisample is not supported in Android API " + Build.VERSION.SDK_INT + ", min 21 is required");
+    }
+
     public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, int[] data) {
         check();
         ByteBuffer buffer0 = Texture2D.Companion.getBufferPool().get(data.length * 4, false);
@@ -566,7 +321,7 @@ public class GL11 {
             }
             format = GL_RGB;// OpenGL ES is more strict than OpenGL
             buffer0.rewind();
-            Texture2D.Companion.unpackAlignment(width * 3);
+            Texture2D.Companion.writeAlignment(width * 3);
             GLES20.glTexImage2D(target, level, internalFormat, width, height, border, format, type, buffer0);
         } else {
             buffer.put(data);
@@ -589,56 +344,6 @@ public class GL11 {
                     ", " + y + ", " + w + ", " + h + ", " + getFormat(format) +
                     ", " + getType(type) + ", " + data + ")");
         check();
-    }
-
-    private static String getTexKey(int key) {
-        switch (key) {
-            case GL_TEXTURE_MAG_FILTER:
-                return "TEXTURE_MAG_FILTER";
-            case GL_TEXTURE_MIN_FILTER:
-                return "TEXTURE_MIN_FILTER";
-            case GL_TEXTURE_WRAP_S:
-                return "TEXTURE_WRAP_S";
-            case GL_TEXTURE_WRAP_T:
-                return "TEXTURE_WRAP_T";
-            case GL_TEXTURE_WRAP_R:
-                return "TEXTURE_WRAP_R";
-            case GL_GENERATE_MIPMAP:
-                return "GENERATE_MIPMAP";
-            case GL_TEXTURE_SWIZZLE_RGBA:
-                return "TEXTURE_SWIZZLE_RGBA";
-            default:
-                return key + "";
-        }
-    }
-
-    private static String getTexValue(int value) {
-        switch (value) {
-            case GL_FALSE:
-                return "FALSE";
-            case GL_TRUE:
-                return "TRUE";
-            case GL_LINEAR:
-                return "LINEAR";
-            case GL_NEAREST:
-                return "NEAREST";
-            case GL_CLAMP_TO_EDGE:
-                return "CLAMP_TO_EDGE";
-            case GL_REPEAT:
-                return "REPEAT";
-            case GL_MIRRORED_REPEAT:
-                return "MIRRORED_REPEAT";
-            case GL_LINEAR_MIPMAP_LINEAR:
-                return "LINEAR_MIPMAP_LINEAR";
-            case GL_LINEAR_MIPMAP_NEAREST:
-                return "LINEAR_MIPMAP_NEAREST";
-            case GL_NEAREST_MIPMAP_LINEAR:
-                return "NEAREST_MIPMAP_LINEAR";
-            case GL_NEAREST_MIPMAP_NEAREST:
-                return "NEAREST_MIPMAP_NEAREST";
-            default:
-                return value + "";
-        }
     }
 
     public static void glTexParameteri(int target, int key, int value) {
@@ -681,8 +386,8 @@ public class GL11 {
         check();
         if (pointer < 0)
             throw new RuntimeException("Cannot bind fb " + pointer);
-        if (pointer < createdFBs.length && createdFBs[pointer] != pointer) {
-            if (createdFBs[pointer] < pointer) {
+        if (pointer < createdFramebuffers.length && createdFramebuffers[pointer] != pointer) {
+            if (createdFramebuffers[pointer] < pointer) {
                 throw new RuntimeException("Cannot bind fb " + pointer + ", it never was created");
             } else {
                 throw new RuntimeException("Cannot bind fb " + pointer + ", it was destroyed");
@@ -708,11 +413,11 @@ public class GL11 {
         int address = tmpInt1[0];
         if (print || printFramebuffers) System.out.println("glGenFramebuffers() -> " + address);
         check();
-        if (address >= 0 && address < createdFBs.length) {
-            if (createdFBs[address] == address) {
+        if (address >= 0 && address < createdFramebuffers.length) {
+            if (createdFramebuffers[address] == address) {
                 throw new RuntimeException("glGenFramebuffers() returned " + address + " twice");
             }
-            createdFBs[address] = address;
+            createdFramebuffers[address] = address;
         }
         return address;
     }
@@ -724,6 +429,19 @@ public class GL11 {
             System.out.println("glFramebufferTexture2D(" + getTextureTarget(target) + ", " + getAttachment(attachment) + ", " +
                     getTextureTarget(textureTarget) + ", " + texture + ", " + level + ")");
         check();
+    }
+
+    public static void glBlitFramebuffer(
+            int x0, int y0, int w0, int h0,
+            int x1, int y1, int w1, int h1,
+            int bits, int flags) {
+        if (Build.VERSION.SDK_INT >= 18) {
+            check();
+            GLES30.glBlitFramebuffer(x0, y0, w0, h0, x1, y1, w1, h1, bits, flags);
+            check();
+        } else
+            throw new RuntimeException("Operation glTexImage2DMultisample is not supported in Android API " + Build.VERSION.SDK_INT + ", min 18 is required");
+
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -754,6 +472,7 @@ public class GL11 {
         return status;
     }
 
+    @SuppressWarnings("CommentedOutCode")
     public static int glCheckNamedFramebufferStatus(int pointer, int target) {
         check();
         // named version is not available in OpenGL ES
@@ -771,9 +490,9 @@ public class GL11 {
     }
 
     public static void glDeleteFramebuffers(int framebuffer) {
-        if (framebuffer < createdFBs.length && createdFBs[framebuffer] != framebuffer)
+        if (framebuffer < createdFramebuffers.length && createdFramebuffers[framebuffer] != framebuffer)
             throw new RuntimeException("Cannot delete non-existing framebuffer");
-        if (framebuffer < createdFBs.length) createdFBs[framebuffer]++;
+        if (framebuffer < createdFramebuffers.length) createdFramebuffers[framebuffer]++;
         if (boundFramebuffer == framebuffer)
             throw new RuntimeException("Cannot delete a bound framebuffer");
         tmpInt1[0] = framebuffer;
@@ -787,6 +506,10 @@ public class GL11 {
         int program = GLES20.glCreateProgram();
         if (print) System.out.println("glCreateProgram() -> " + program);
         return program;
+    }
+
+    public static void glDeleteProgram(int program) {
+        GLES20.glDeleteProgram(program);
     }
 
     public static int glCreateShader(int type) {
@@ -1174,17 +897,24 @@ public class GL11 {
         Warning.INSTANCE.warn("Cannot call glClipControl on Android!");
     }
 
+    private static boolean warnedDTT = false;
+
     public static void glDeleteTextures(int[] textures) {
         check();
-        for (int i : textures) {
-            if (i < createdTexs.length) {
-                if (createdTexs[i] == i) {
-                    createdTexs[i]++;
-                } else throw new RuntimeException("Cannot delete texture " + i + "twice");
+        for (int texToDelete : textures) {
+            if (texToDelete < createdTextures.length) {
+                if (createdTextures[texToDelete] == texToDelete) {
+                    createdTextures[texToDelete]++;
+                } else if (!warnedDTT) {
+                    warnedDTT = true;
+                    new RuntimeException("Cannot delete texture " + texToDelete + " twice")
+                            .printStackTrace();
+                }
             }
-            for (int j : boundTex) {
-                if (i == j) {
-                    System.out.println("Cannot delete bound texture " + i);
+            for (int boundTexture : boundTextures) {
+                if (texToDelete == boundTexture) {
+                    new RuntimeException("Cannot delete bound texture " + texToDelete)
+                            .printStackTrace();
                 }
             }
         }
@@ -1249,6 +979,19 @@ public class GL11 {
         tmp.position(0);
         tmp.asIntBuffer().get(buffer);
         MemoryUtil.memFree(tmp);
+    }
+
+    public static void glDebugMessageCallback(GLDebugMessageCallbackI callbackI, long userParam) {
+        if (Build.VERSION.SDK_INT >= 24) {
+            check();
+            // not yet implemented???
+            try {
+                GLES32.glDebugMessageCallback(callbackI);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            check();
+        }
     }
 
 }

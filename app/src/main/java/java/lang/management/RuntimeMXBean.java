@@ -8,7 +8,7 @@ package java.lang.management;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "SameReturnValue"})
 public interface RuntimeMXBean extends PlatformManagedObject {
 
     String getName();

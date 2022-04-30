@@ -5,6 +5,7 @@ import org.lwjgl.system.MemoryUtil;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
+@SuppressWarnings("unused")
 public class BufferUtils {
 
     public static FloatBuffer createFloatBuffer(int size){

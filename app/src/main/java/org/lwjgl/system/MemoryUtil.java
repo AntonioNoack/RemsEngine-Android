@@ -7,6 +7,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
+@SuppressWarnings("unused")
 public class MemoryUtil {
 
     public static ByteBuffer memAlloc(int size) {

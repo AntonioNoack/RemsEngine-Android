@@ -1,5 +1,6 @@
 package org.lwjgl.opengl;
 
+@SuppressWarnings("unused")
 public class GLCapabilities {
 
     // GL_EXT_texture_filter_anisotropic
