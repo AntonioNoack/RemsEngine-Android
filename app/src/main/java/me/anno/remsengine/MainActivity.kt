@@ -3,23 +3,25 @@ package me.anno.remsengine
 import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.content.Context
-import android.opengl.GLSurfaceView
-import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import me.anno.engine.RemsEngine
-import me.anno.gpu.GFX
-import me.anno.utils.OS
-
 import android.content.ContextWrapper
-import android.view.*
+import android.opengl.GLSurfaceView
+import android.opengl.GLSurfaceView.RENDERMODE_CONTINUOUSLY
+import android.os.Bundle
+import android.view.GestureDetector
+import android.view.KeyEvent
+import android.view.MotionEvent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GestureDetectorCompat
 import me.anno.Logging
+import me.anno.engine.RemsEngine
+import me.anno.gpu.GFX
 import me.anno.gpu.WindowX
 import me.anno.gpu.debug.DebugGPUStorage
 import me.anno.input.Input
 import me.anno.input.Touch
 import me.anno.studio.StudioBase
 import me.anno.studio.StudioBase.Companion.addEvent
+import me.anno.utils.OS
 import org.apache.logging.log4j.LogManager
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
@@ -97,6 +99,7 @@ class MainActivity : AppCompatActivity(),
             // Request an OpenGL ES 2.0 compatible context.
             glSurfaceView.setEGLContextClientVersion(major)
             glSurfaceView.setRenderer(renderer)
+            glSurfaceView.renderMode = RENDERMODE_CONTINUOUSLY
         } else {
             // This is where you could create an OpenGL ES 1.x compatible
             // renderer if we want to support both ES 1 and ES 2.
@@ -152,7 +155,7 @@ class MainActivity : AppCompatActivity(),
 
     override fun onDoubleTap(e: MotionEvent?): Boolean {
         // double click, but we have implemented that ourselves anyways
-        GFX.addGPUTask(1) { DebugGPUStorage.openMenu() }
+        addEvent { DebugGPUStorage.openMenu() }
         return false
     }
 
@@ -240,6 +243,7 @@ class MainActivity : AppCompatActivity(),
             val property = this::class.memberProperties
                 .first { it.name == name }
                 .apply { isAccessible = true }
+            @Suppress("unchecked_cast")
             property as KMutableProperty1<Any, Any?>
             property.set(this, value)
         }

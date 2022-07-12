@@ -3,12 +3,12 @@ package me.anno.remsengine
 import android.opengl.GLSurfaceView
 import android.os.Build
 import androidx.annotation.RequiresApi
-import me.anno.audio.openal.ALBase
+import me.anno.Engine
 import me.anno.config.DefaultConfig
 import me.anno.config.DefaultStyle
 import me.anno.gpu.GFX
 import me.anno.gpu.OpenGL
-import me.anno.gpu.buffer.Buffer
+import me.anno.gpu.buffer.OpenGLBuffer
 import me.anno.gpu.drawing.DrawRectangles
 import me.anno.gpu.shader.OpenGLShader
 import me.anno.gpu.texture.Texture2D
@@ -50,7 +50,7 @@ class Renderer : GLSurfaceView.Renderer {
     private fun invalidateOpenGLES() {
         OpenGLShader.lastProgram = -1
         Texture2D.invalidateBinding()
-        Buffer.invalidateBinding()
+        OpenGLBuffer.invalidateBinding()
     }
 
     private var frameIndex = 0
@@ -62,14 +62,16 @@ class Renderer : GLSurfaceView.Renderer {
             // frame isn't kept on Android :/
             GFX.windows.forEach { it.needsRefresh = true }
             GFX.glThread = Thread.currentThread()
+            Engine.updateTime()
             invalidateOpenGLES()
             val windowX = GFX.someWindow
             GFX.activeWindow = windowX
+            // println("drawing frame $frameIndex")
             when (frameIndex++) {
                 0 -> {
                     GFX.check()
                     GFX.setProperty("capabilities", GL.getCapabilities())
-                    GFX.renderFrame0(windowX)
+                    GFX.renderFrame0(windowX, 0, 1)
                     KeyMap.defineKeys()
                     DefaultStyle.baseTheme["fontSize", "dark"] = 25
                     DefaultStyle.baseTheme["fontSize", "light"] = 25

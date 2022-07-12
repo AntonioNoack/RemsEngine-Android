@@ -42,7 +42,6 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.Arrays;
 
-import me.anno.OpenGLLegacy;
 import me.anno.gpu.GFX;
 import me.anno.gpu.texture.Texture2D;
 import me.anno.utils.Warning;
@@ -148,42 +147,6 @@ public class GL11 {
         check();
         GLES11.glClear(mask);
         check();
-    }
-
-    public static void glMatrixMode(int mode) {
-        OpenGLLegacy.INSTANCE.glMatrixMode(mode);
-    }
-
-    public static void glLoadIdentity() {
-        OpenGLLegacy.INSTANCE.loadIdentity();
-    }
-
-    public static void glOrtho(float x0, float x1, float y0, float y1, float z0, float z1) {
-        OpenGLLegacy.INSTANCE.ortho(x0, x1, y0, y1, z0, z1);
-    }
-
-    public static void glOrtho(double x0, double x1, double y0, double y1, double z0, double z1) {
-        glOrtho((float) x0, (float) x1, (float) y0, (float) y1, (float) z0, (float) z1);
-    }
-
-    public static void glColor3f(float r, float g, float b) {
-        OpenGLLegacy.INSTANCE.color(r, g, b);
-    }
-
-    public static void glBegin(int mode) {
-        OpenGLLegacy.INSTANCE.begin(mode);
-    }
-
-    public static void glEnd() {
-        OpenGLLegacy.INSTANCE.end();
-    }
-
-    public static void glVertex2f(float x, float y) {
-        OpenGLLegacy.INSTANCE.vertex(x, y);
-    }
-
-    public static void glRotatef(float a, float x, float y, float z) {
-        OpenGLLegacy.INSTANCE.rotate(a, x, y, z);
     }
 
     public static void glEnable(int flags) {
@@ -313,7 +276,7 @@ public class GL11 {
 
     public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, int[] data) {
         check();
-        ByteBuffer buffer0 = Texture2D.Companion.getBufferPool().get(data.length * 4, false);
+        ByteBuffer buffer0 = Texture2D.Companion.getBufferPool().get(data.length * 4, false, false);
         IntBuffer buffer = buffer0.asIntBuffer(); // IntBuffer.allocate(data.length);
         if (internalFormat == GL_RGB8 && format == GL_RGBA) {
             for (int argb : data) {

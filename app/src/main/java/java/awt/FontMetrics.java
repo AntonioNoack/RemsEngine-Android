@@ -15,7 +15,7 @@ public class FontMetrics {
         height = (int) Math.ceil(font.size);
         Paint p = g.paint;
         Paint.FontMetrics m = p.getFontMetrics();
-        ascent = m.ascent;
+        ascent = -m.ascent; // mirrored, then it's similar to the Java AWT values
         descent = m.descent;
         leading = m.leading;
         top = m.top;

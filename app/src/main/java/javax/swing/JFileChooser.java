@@ -19,7 +19,13 @@ public class JFileChooser {
         this.mode = mode;
     }
 
-    public int showOpenDialog(){
+    public int showOpenDialog() {
+        // todo support opening files, if this is possible at all generally...
+        // we don't support it yet
+        return CANCEL_OPTION;
+    }
+
+    public int showOpenDialog(java.awt.Component component) {
         // todo support opening files, if this is possible at all generally...
         // we don't support it yet
         return CANCEL_OPTION;
