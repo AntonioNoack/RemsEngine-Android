@@ -7,12 +7,12 @@ import me.anno.Engine
 import me.anno.config.DefaultConfig
 import me.anno.config.DefaultStyle
 import me.anno.gpu.GFX
-import me.anno.gpu.OpenGL
+import me.anno.gpu.GFXBase
+import me.anno.gpu.GFXState
 import me.anno.gpu.buffer.OpenGLBuffer
 import me.anno.gpu.drawing.DrawRectangles
 import me.anno.gpu.shader.OpenGLShader
 import me.anno.gpu.texture.Texture2D
-import me.anno.input.Input
 import me.anno.remsengine.MainActivity.Companion.setProperty
 import me.anno.remsengine.android.KeyMap
 import me.anno.studio.StudioBase
@@ -29,7 +29,7 @@ class Renderer : GLSurfaceView.Renderer {
     @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         GFX.glThread = Thread.currentThread()
-        OpenGL.newSession()
+        GFXState.newSession()
         GL11.invalidateBinding()
         GL11.testShaderVersions()
         Texture2D.alwaysBindTexture = true
@@ -43,7 +43,9 @@ class Renderer : GLSurfaceView.Renderer {
         if (width != window.width || height != window.height) {
             window.width = width
             window.height = height
-            StudioBase.addEvent { Input.invalidateLayout() }
+            StudioBase.addEvent {
+                window.framesSinceLastInteraction = 0
+            }
         }
     }
 
@@ -66,35 +68,32 @@ class Renderer : GLSurfaceView.Renderer {
             invalidateOpenGLES()
             val windowX = GFX.someWindow
             GFX.activeWindow = windowX
-            // println("drawing frame $frameIndex")
             when (frameIndex++) {
                 0 -> {
                     GFX.check()
-                    GFX.setProperty("capabilities", GL.getCapabilities())
-                    GFX.renderFrame0(windowX, 0, 1)
+                    GFXBase.setProperty("capabilities", GL.getCapabilities())
+                    GFX.renderStep0()
+                    // my emulator says 4, but only supports OpenGL ES 3.0...
+                    if (GL11.version10x < 31) {
+                        GFX.maxSamples = 1
+                    }
                     KeyMap.defineKeys()
                     DefaultStyle.baseTheme["fontSize", "dark"] = 25
                     DefaultStyle.baseTheme["fontSize", "light"] = 25
                     DefaultStyle.baseTheme["customList.spacing", "dark"] = 10
                     DefaultStyle.baseTheme["customList.spacing", "light"] = 10
                     GFX.check()
-                }
-                1 -> {
-                    GFX.check()
-                    GFX.renderStep0()
-                    // my emulator says 4, but only supports OpenGL ES 3.0...
-                    if (GL11.version10x < 31) {
-                        GFX.maxSamples = 1
-                    }
-                    GFX.check()
-                    GFX.onInit?.invoke()
-                    GFX.check()
+                    StudioBase.instance!!.gameInit()
                 }
                 else -> {
                     GFX.check()
                     GFX.renderStep(windowX)
                     // draw the cursor for debug purposes
-                    DrawRectangles.drawRect(windowX.mouseX.toInt(), windowX.mouseY.toInt(), 6, 6, -1)
+                    DrawRectangles.drawRect(
+                        windowX.mouseX.toInt(),
+                        windowX.mouseY.toInt(),
+                        6, 6, -1
+                    )
                     GFX.check()
                 }
             }

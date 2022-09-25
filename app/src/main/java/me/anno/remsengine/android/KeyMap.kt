@@ -3,6 +3,7 @@ package me.anno.remsengine.android
 import android.view.KeyEvent.*
 import me.anno.input.KeyCombination
 import me.anno.input.KeyCombination.Companion.keyMapping
+import me.anno.remsengine.MainActivity.Companion.GLFW_KEY_ESCAPE
 import me.anno.remsengine.MainActivity.Companion.GLFW_MOUSE_BUTTON_LEFT
 import me.anno.remsengine.MainActivity.Companion.GLFW_MOUSE_BUTTON_MIDDLE
 import me.anno.remsengine.MainActivity.Companion.GLFW_MOUSE_BUTTON_RIGHT
@@ -14,6 +15,14 @@ object KeyMap {
             KeyCombination.put(key, button)
         }
     }
+
+    private fun put(key: Int, glfw: Int, vararg buttons: String) {
+        keyCodeMapping[key] = glfw
+        put(key, *buttons)
+    }
+
+    // Android -> GLFW
+    val keyCodeMapping = HashMap<Int, Int>()
 
     fun defineKeys() {
 
@@ -54,7 +63,7 @@ object KeyMap {
         put(GLFW_MOUSE_BUTTON_RIGHT, "right")
         put(GLFW_MOUSE_BUTTON_MIDDLE, "middle")
         put(KEYCODE_FORWARD, "mouseForward")
-        put(KEYCODE_BACK, "mouseBackward")
+        put(KEYCODE_BACK, GLFW_KEY_ESCAPE, "escape")
         for (i in 0..9) put(KEYCODE_NUMPAD_0 + i, "kp$i", "num$i", "numpad$i", "numblock$i")
         put(KEYCODE_SYSRQ, "print", "printScreen")
         put(KEYCODE_MENU, "menu", "printMenu")

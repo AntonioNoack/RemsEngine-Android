@@ -12,15 +12,16 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GestureDetectorCompat
-import me.anno.Logging
 import me.anno.engine.RemsEngine
 import me.anno.gpu.GFX
 import me.anno.gpu.WindowX
 import me.anno.gpu.debug.DebugGPUStorage
 import me.anno.input.Input
 import me.anno.input.Touch
+import me.anno.remsengine.android.KeyMap.keyCodeMapping
 import me.anno.studio.StudioBase
 import me.anno.studio.StudioBase.Companion.addEvent
+import me.anno.utils.Logging
 import me.anno.utils.OS
 import org.apache.logging.log4j.LogManager
 import kotlin.reflect.KMutableProperty1
@@ -77,9 +78,9 @@ class MainActivity : AppCompatActivity(),
         engine.tick("run")
         Logging.setup()
         engine.tick("logging")
-        GFX.onInit = engine::gameInit
-        GFX.onLoop = engine::onGameLoop
-        GFX.onShutdown = engine::onShutdown
+        // GFX.onInit = engine::gameInit
+        // GFX.onLoop = engine::onGameLoop
+        // GFX.onShutdown = engine::onShutdown
         GFX.gpuTasks.clear() // they couldn't be executed anyways
         engine.loadConfig()
         engine.tick("config")
@@ -170,12 +171,12 @@ class MainActivity : AppCompatActivity(),
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        addEvent { Input.onKeyPressed(windowX, keyCode) }
+        addEvent { Input.onKeyPressed(windowX, keyCodeMapping[keyCode] ?: keyCode) }
         return true
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-        addEvent { Input.onKeyReleased(windowX, keyCode) }
+        addEvent { Input.onKeyReleased(windowX, keyCodeMapping[keyCode] ?: keyCode) }
         return true
     }
 
@@ -238,6 +239,7 @@ class MainActivity : AppCompatActivity(),
         const val GLFW_MOUSE_BUTTON_LEFT = 0
         const val GLFW_MOUSE_BUTTON_RIGHT = 1
         const val GLFW_MOUSE_BUTTON_MIDDLE = 2
+        const val GLFW_KEY_ESCAPE = 256
 
         fun Any.setProperty(name: String, value: Any?) {
             val property = this::class.memberProperties

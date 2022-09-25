@@ -8,7 +8,7 @@ import me.anno.language.Language;
 public class BundledSpellcheck {
 
     @SuppressWarnings("CommentedOutCode")
-    public static void runInstance(Language language, ConcurrentLinkedQueue<Request> queue) {
+    public static void runInstance(Language language, ConcurrentLinkedQueue<Object> queue) {
         /*try {
             CommandLine instance = new CommandLine(language.getCode());
             while (!Engine.INSTANCE.getShutdown()) {
