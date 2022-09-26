@@ -1,5 +1,6 @@
 package me.anno.remsengine
 
+import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -10,6 +11,7 @@ import me.anno.gpu.GFX
 import me.anno.gpu.GFXBase
 import me.anno.gpu.GFXState
 import me.anno.gpu.buffer.OpenGLBuffer
+import me.anno.gpu.drawLogo
 import me.anno.gpu.drawing.DrawRectangles
 import me.anno.gpu.shader.OpenGLShader
 import me.anno.gpu.texture.Texture2D
@@ -18,7 +20,7 @@ import me.anno.remsengine.android.KeyMap
 import me.anno.studio.StudioBase
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.opengl.GL
-import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL11.*
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
@@ -30,8 +32,8 @@ class Renderer : GLSurfaceView.Renderer {
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         GFX.glThread = Thread.currentThread()
         GFXState.newSession()
-        GL11.invalidateBinding()
-        GL11.testShaderVersions()
+        invalidateBinding()
+        testShaderVersions()
         Texture2D.alwaysBindTexture = true
         logger.info("Surface Created")
         frameIndex = 0
@@ -68,13 +70,27 @@ class Renderer : GLSurfaceView.Renderer {
             invalidateOpenGLES()
             val windowX = GFX.someWindow
             GFX.activeWindow = windowX
+            GFX.check()
+
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
+            GLES20.glViewport(0, 0, windowX.width, windowX.height)
+
             when (frameIndex++) {
                 0 -> {
-                    GFX.check()
                     GFXBase.setProperty("capabilities", GL.getCapabilities())
-                    GFX.renderStep0()
                     // my emulator says 4, but only supports OpenGL ES 3.0...
-                    if (GL11.version10x < 31) {
+                    if (version10x < 31) {
+                        GFX.maxSamples = 1
+                    }
+                    drawLogo(windowX, false)
+                }
+                in 1 until 4 -> {
+                    drawLogo(windowX, false)
+                }
+                4 -> {
+                    drawLogo(windowX, true)
+                    GFX.renderStep0()
+                    if (version10x < 31) {
                         GFX.maxSamples = 1
                     }
                     KeyMap.defineKeys()
@@ -86,7 +102,6 @@ class Renderer : GLSurfaceView.Renderer {
                     StudioBase.instance!!.gameInit()
                 }
                 else -> {
-                    GFX.check()
                     GFX.renderStep(windowX)
                     // draw the cursor for debug purposes
                     DrawRectangles.drawRect(
@@ -94,9 +109,9 @@ class Renderer : GLSurfaceView.Renderer {
                         windowX.mouseY.toInt(),
                         6, 6, -1
                     )
-                    GFX.check()
                 }
             }
+            GFX.check()
         } catch (e: Exception) {
             e.printStackTrace()
         }

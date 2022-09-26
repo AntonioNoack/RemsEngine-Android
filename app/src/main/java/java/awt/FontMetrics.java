@@ -20,7 +20,7 @@ public class FontMetrics {
         leading = m.leading;
         top = m.top;
         bottom = m.bottom;
-        System.out.println("[FontMetrics] height: " + height + ", ascent: " + ascent + ", descent: " + descent + ", top: " + top + ", bottom: " + bottom);
+        // System.out.println("[FontMetrics] height: " + height + ", ascent: " + ascent + ", descent: " + descent + ", top: " + top + ", bottom: " + bottom);
     }
 
     public int getHeight() {
