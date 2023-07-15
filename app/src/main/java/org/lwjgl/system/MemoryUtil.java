@@ -24,7 +24,8 @@ public class MemoryUtil {
     }
 
     public static void memFree(Buffer toBeDestroyed) {
-        if (toBeDestroyed.isDirect()) {
+        // todo make true again
+        if (false) if (toBeDestroyed.isDirect()) {
             try {
                 Method cleanerMethod = toBeDestroyed.getClass().getMethod("cleaner");
                 cleanerMethod.setAccessible(true);

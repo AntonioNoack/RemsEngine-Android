@@ -1,4 +1,4 @@
-package me.anno.remsengine
+package me.anno.remsengine.android
 
 import android.annotation.SuppressLint
 import android.app.ActivityManager
@@ -12,21 +12,19 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GestureDetectorCompat
-import me.anno.engine.RemsEngine
 import me.anno.gpu.GFX
-import me.anno.gpu.WindowX
+import me.anno.gpu.OSWindow
 import me.anno.gpu.debug.DebugGPUStorage
 import me.anno.input.Input
 import me.anno.input.Touch
 import me.anno.remsengine.android.KeyMap.keyCodeMapping
 import me.anno.studio.StudioBase
 import me.anno.studio.StudioBase.Companion.addEvent
+import me.anno.tests.game.Snake
+import me.anno.ui.debug.TestStudio
 import me.anno.utils.Logging
 import me.anno.utils.OS
 import org.apache.logging.log4j.LogManager
-import kotlin.reflect.KMutableProperty1
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.jvm.isAccessible
 
 class MainActivity : AppCompatActivity(),
     GestureDetector.OnGestureListener,
@@ -34,11 +32,11 @@ class MainActivity : AppCompatActivity(),
 
     private val renderer = Renderer()
 
-    private lateinit var glSurfaceView: GLSurfaceView
+    private var glSurfaceView: GLSurfaceView? = null
 
     private var engine: StudioBase? = null
 
-    private val windowX = WindowX("")
+    private val windowX = OSWindow("")
 
     init {
         GFX.windows.clear()
@@ -51,8 +49,6 @@ class MainActivity : AppCompatActivity(),
 
         // hide top bar
         supportActionBar?.hide()
-
-        glSurfaceView = GLSurfaceView(this)
 
         val c = ContextWrapper(this)
         val path = c.filesDir.path
@@ -71,7 +67,9 @@ class MainActivity : AppCompatActivity(),
         LOGGER.info("s1: $src1, ${src1.exists}, ${src1.mkdirs()}")
         LOGGER.info("s2: $src2, ${src2.exists}, ${src2.mkdirs()}")
 
-        val engine = this.engine ?: RemsEngine()
+        val engine = this.engine ?: TestStudio {
+            listOf(Snake().apply { weight = 1f })
+        }
 
         StudioBase.instance = engine
         engine.setupNames()
@@ -97,17 +95,19 @@ class MainActivity : AppCompatActivity(),
         LOGGER.info("OpenGL ES Version: $major.$minor")
 
         if (supportsEs2) {
+            val glSurfaceView = GLSurfaceView(this)
+            this.glSurfaceView = glSurfaceView
             // Request an OpenGL ES 2.0 compatible context.
             glSurfaceView.setEGLContextClientVersion(major)
             glSurfaceView.setRenderer(renderer)
             glSurfaceView.renderMode = RENDERMODE_CONTINUOUSLY
+            setContentView(glSurfaceView)
         } else {
             // This is where you could create an OpenGL ES 1.x compatible
             // renderer if we want to support both ES 1 and ES 2.
             LOGGER.error("Rem's Engine currently does not support OpenGL ES 1.0")
+            this.glSurfaceView = null
         }
-
-        setContentView(glSurfaceView)
 
         detector = GestureDetectorCompat(this, this)
         detector.setOnDoubleTapListener(this)
@@ -219,13 +219,13 @@ class MainActivity : AppCompatActivity(),
 
     override fun onResume() {
         super.onResume()
-        glSurfaceView.onResume()
+        glSurfaceView?.onResume()
         LOGGER.info("Resumed")
     }
 
     override fun onPause() {
         super.onPause()
-        glSurfaceView.onPause()
+        glSurfaceView?.onPause()
         LOGGER.info("Paused")
     }
 
@@ -241,13 +241,19 @@ class MainActivity : AppCompatActivity(),
         const val GLFW_MOUSE_BUTTON_MIDDLE = 2
         const val GLFW_KEY_ESCAPE = 256
 
-        fun Any.setProperty(name: String, value: Any?) {
+        /*fun Any.setProperty(name: String, value: Any?) {
             val property = this::class.memberProperties
                 .first { it.name == name }
                 .apply { isAccessible = true }
             @Suppress("unchecked_cast")
             property as KMutableProperty1<Any, Any?>
             property.set(this, value)
+        }*/
+
+        fun Any.setStatic(name: String, value: Any?) {
+            val property = this.javaClass.getField(name)
+            property.isAccessible = true
+            property.set(null, value)
         }
 
     }

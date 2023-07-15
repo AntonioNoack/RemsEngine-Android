@@ -3,10 +3,10 @@ package me.anno.remsengine.android
 import android.view.KeyEvent.*
 import me.anno.input.KeyCombination
 import me.anno.input.KeyCombination.Companion.keyMapping
-import me.anno.remsengine.MainActivity.Companion.GLFW_KEY_ESCAPE
-import me.anno.remsengine.MainActivity.Companion.GLFW_MOUSE_BUTTON_LEFT
-import me.anno.remsengine.MainActivity.Companion.GLFW_MOUSE_BUTTON_MIDDLE
-import me.anno.remsengine.MainActivity.Companion.GLFW_MOUSE_BUTTON_RIGHT
+import me.anno.remsengine.android.MainActivity.Companion.GLFW_KEY_ESCAPE
+import me.anno.remsengine.android.MainActivity.Companion.GLFW_MOUSE_BUTTON_LEFT
+import me.anno.remsengine.android.MainActivity.Companion.GLFW_MOUSE_BUTTON_MIDDLE
+import me.anno.remsengine.android.MainActivity.Companion.GLFW_MOUSE_BUTTON_RIGHT
 
 object KeyMap {
 

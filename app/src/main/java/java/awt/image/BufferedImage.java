@@ -48,6 +48,24 @@ public class BufferedImage {
         return raster.data[x + y * width];
     }
 
+    public int[] getRGB(int x, int y, int dx, int dy, int[] dst, int offset, int stride) {
+        int[] data = raster.data;
+        int i0 = x + y * width;
+        if (dst == null) dst = new int[offset + stride * dy];
+        if (stride == width) {
+            System.arraycopy(data, i0, dst, offset, width * dy);
+        } else {
+            for (int j = 0; j < dy; j++) {
+                System.arraycopy(data, i0 + j * width, dst, offset + j * stride, dx);
+            }
+        }
+        return dst;
+    }
+
+    public ColorModel getColorModel() {
+        return ColorModel.instance;
+    }
+
     public Raster getData() {
         return raster;
     }

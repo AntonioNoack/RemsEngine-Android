@@ -10,6 +10,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 
+import org.joml.AABBf;
 import org.joml.Vector2f;
 
 import java.awt.Font;
@@ -94,8 +95,8 @@ public class TextLayout {
     }
 
     private static Shape createMarchingSquaresShape(int w, int h, float[] pixelFloats) {
-
-        List<List<Vector2f>> polygons = MarchingSquares.INSTANCE.march(w, h, pixelFloats, 127.5f);
+        List<List<Vector2f>> polygons = MarchingSquares.INSTANCE.march(w, h, pixelFloats, 127.5f,
+                new AABBf(0f, 0f, 0f, w - 1, h - 1, 0f));// todo is maxX,maxY correct?
         Shape shape = new Shape();
         int numPoints = 0;
         for (List<Vector2f> polygon : polygons) {

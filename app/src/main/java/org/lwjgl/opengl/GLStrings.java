@@ -31,6 +31,7 @@ import static android.opengl.GLES10.GL_TRUE;
 import static android.opengl.GLES10.GL_UNSIGNED_BYTE;
 import static android.opengl.GLES10.GL_UNSIGNED_SHORT;
 import static android.opengl.GLES11.GL_GENERATE_MIPMAP;
+import static android.opengl.GLES11Ext.GL_BGRA;
 import static android.opengl.GLES20.GL_ARRAY_BUFFER;
 import static android.opengl.GLES20.GL_COLOR_ATTACHMENT0;
 import static android.opengl.GLES20.GL_DEPTH_ATTACHMENT;
@@ -63,6 +64,7 @@ import static android.opengl.GLES30.GL_RGBA8;
 import static android.opengl.GLES30.GL_TEXTURE_3D;
 import static android.opengl.GLES30.GL_TEXTURE_WRAP_R;
 import static android.opengl.GLES31.GL_TEXTURE_2D_MULTISAMPLE;
+import static android.opengl.GLES32.GL_CLAMP_TO_BORDER;
 
 import static org.lwjgl.opengl.GL11.GL_QUADS;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_SWIZZLE_RGBA;
@@ -86,7 +88,7 @@ public class GLStrings {
             case GL_LINE_STRIP:
                 return "LINE_STRIP";
             default:
-                return mode + "";
+                return Integer.toString(mode);
         }
     }
 
@@ -103,7 +105,7 @@ public class GLStrings {
             case GL_FRAMEBUFFER:
                 return "FRAMEBUFFER";
             default:
-                return target + "";
+                return Integer.toString(target);
         }
     }
 
@@ -121,7 +123,7 @@ public class GLStrings {
             case GL_DEPTH_STENCIL_ATTACHMENT:
                 return "DEPTH_STENCIL_ATTACHMENT";
             default:
-                return attachment + "";
+                return Integer.toString(attachment);
         }
     }
 
@@ -136,7 +138,7 @@ public class GLStrings {
             case GL_PIXEL_UNPACK_BUFFER:
                 return "PIXEL_UNPACK_BUFFER";
             default:
-                return target + "";
+                return Integer.toString(target);
         }
     }
 
@@ -149,7 +151,7 @@ public class GLStrings {
             case GL_STREAM_DRAW:
                 return "STREAM_DRAW";
             default:
-                return target + "";
+                return Integer.toString(target);
         }
     }
 
@@ -170,7 +172,7 @@ public class GLStrings {
             case GL_INT:
                 return "INT";
             default:
-                return type + "";
+                return Integer.toString(type);
         }
     }
 
@@ -210,8 +212,10 @@ public class GLStrings {
                 return "DEPTH_COMPONENT32";
             case GL_DEPTH_COMPONENT32F:
                 return "DEPTH_COMPONENT32F";
+            case GL_BGRA:
+                return "BGRA";
             default:
-                return format + "";
+                return Integer.toString(format);
         }
     }
 
@@ -232,7 +236,7 @@ public class GLStrings {
             case GL_TEXTURE_SWIZZLE_RGBA:
                 return "TEXTURE_SWIZZLE_RGBA";
             default:
-                return key + "";
+                return Integer.toString(key);
         }
     }
 
@@ -252,6 +256,8 @@ public class GLStrings {
                 return "REPEAT";
             case GL_MIRRORED_REPEAT:
                 return "MIRRORED_REPEAT";
+            case GL_CLAMP_TO_BORDER:
+                return "CLAMP_TO_BORDER";
             case GL_LINEAR_MIPMAP_LINEAR:
                 return "LINEAR_MIPMAP_LINEAR";
             case GL_LINEAR_MIPMAP_NEAREST:
@@ -261,7 +267,7 @@ public class GLStrings {
             case GL_NEAREST_MIPMAP_NEAREST:
                 return "NEAREST_MIPMAP_NEAREST";
             default:
-                return value + "";
+                return Integer.toString(value);
         }
     }
 
