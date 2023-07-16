@@ -83,11 +83,6 @@ import static android.opengl.GLES30.GL_UNSIGNED_INT_24_8;
 import static android.opengl.GLES30.GL_UNSIGNED_INT_2_10_10_10_REV;
 import static android.opengl.GLES30.GL_UNSIGNED_INT_5_9_9_9_REV;
 
-import android.os.Build;
-
-import androidx.annotation.RequiresApi;
-
-@RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class TextureFormat {
 
     final int internalFormat, format, type;

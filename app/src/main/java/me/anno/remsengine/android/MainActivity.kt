@@ -12,19 +12,31 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GestureDetectorCompat
+import me.anno.config.DefaultConfig.style
+import me.anno.ecs.components.mesh.Mesh
+import me.anno.ecs.components.shaders.SkyBox
+import me.anno.engine.ui.render.Renderers.previewRenderer
 import me.anno.gpu.GFX
+import me.anno.gpu.GFXState.useFrame
 import me.anno.gpu.OSWindow
 import me.anno.gpu.debug.DebugGPUStorage
+import me.anno.gpu.drawing.DrawRectangles
+import me.anno.gpu.drawing.Perspective
 import me.anno.input.Input
 import me.anno.input.Touch
+import me.anno.io.files.thumbs.Thumbs
+import me.anno.io.files.thumbs.ThumbsExt
+import me.anno.mesh.Shapes.flat11
 import me.anno.remsengine.android.KeyMap.keyCodeMapping
 import me.anno.studio.StudioBase
 import me.anno.studio.StudioBase.Companion.addEvent
 import me.anno.tests.game.Snake
+import me.anno.ui.Panel
 import me.anno.ui.debug.TestStudio
 import me.anno.utils.Logging
 import me.anno.utils.OS
 import org.apache.logging.log4j.LogManager
+import org.joml.Matrix4f
 
 class MainActivity : AppCompatActivity(),
     GestureDetector.OnGestureListener,
@@ -36,7 +48,7 @@ class MainActivity : AppCompatActivity(),
 
     private var engine: StudioBase? = null
 
-    private val windowX = OSWindow("")
+    val windowX = OSWindow("")
 
     init {
         GFX.windows.clear()
@@ -68,7 +80,39 @@ class MainActivity : AppCompatActivity(),
         LOGGER.info("s2: $src2, ${src2.exists}, ${src2.mkdirs()}")
 
         val engine = this.engine ?: TestStudio {
-            listOf(Snake().apply { weight = 1f })
+            val skyPanel = object : Panel(style) {
+                val sky = object : SkyBox() {
+                    override fun getMesh(): Mesh {
+                        return flat11.both
+                    }
+                }
+                val cameraMatrix = Matrix4f()
+                var first = true
+                override val canDrawOverBorders get() = true
+                override fun onDraw(x0: Int, y0: Int, x1: Int, y1: Int) {
+                    // println("Drawing $x0-$x1,$y0-$y1")
+                    // super.onDraw(x0, y0, x1, y1)
+                    DrawRectangles.drawRect(x0, y0, x1 - x0, y1 - y0, -1)
+                    useFrame(previewRenderer) {
+                        sky.nadirSharpness = 10f
+                        val shader = sky.shader!!.value
+                        shader.use()
+                        if (first) shader.printCode()
+                        first = false
+                        Perspective.setPerspective(
+                            cameraMatrix,
+                            0.7f,
+                            (x1 - x0) * 1f / (y1 - y0),
+                            0.001f, 10f, 0f, 0f
+                        )
+                        ThumbsExt.bindShader(shader, cameraMatrix, Thumbs.matModelMatrix)
+                        sky.material.bind(shader)
+                        sky.draw(shader, 0)
+                    }
+                }
+            }.apply { weight = 1f }
+            val snakePanel = Snake().apply { weight = 1f }
+            listOf(snakePanel)
         }
 
         StudioBase.instance = engine
@@ -95,7 +139,7 @@ class MainActivity : AppCompatActivity(),
         LOGGER.info("OpenGL ES Version: $major.$minor")
 
         if (supportsEs2) {
-            val glSurfaceView = GLSurfaceView(this)
+            val glSurfaceView = SurfaceView(this)
             this.glSurfaceView = glSurfaceView
             // Request an OpenGL ES 2.0 compatible context.
             glSurfaceView.setEGLContextClientVersion(major)
@@ -114,7 +158,7 @@ class MainActivity : AppCompatActivity(),
 
     }
 
-    private lateinit var detector: GestureDetectorCompat
+    lateinit var detector: GestureDetectorCompat
 
     override fun onDown(e: MotionEvent?): Boolean {
         return false
@@ -171,6 +215,7 @@ class MainActivity : AppCompatActivity(),
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        println("Key-down: $keyCode -> ${keyCodeMapping[keyCode]}")
         addEvent { Input.onKeyPressed(windowX, keyCodeMapping[keyCode] ?: keyCode) }
         return true
     }
@@ -183,38 +228,6 @@ class MainActivity : AppCompatActivity(),
     override fun onGenericMotionEvent(event: MotionEvent): Boolean {
         println("generic motion event")
         return super.onGenericMotionEvent(event)
-    }
-
-    override fun onTouchEvent(event: MotionEvent?): Boolean {
-        event ?: return false
-        val pid = event.getPointerId(event.actionIndex)
-        val isMouse = pid == 0
-        val x = event.x
-        val y = event.y - 80f // why ever
-        if (lastMouseX != x || lastMouseY != y) {
-            lastMouseX = x
-            lastMouseY = y
-            addEvent {
-                Touch.Companion.onTouchMove(pid, x, y)
-                if (isMouse) Input.onMouseMove(windowX, x, y)
-            }
-            // only if there is a single pointer?
-        }
-        when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN,
-            MotionEvent.ACTION_POINTER_DOWN -> addEvent {
-                Touch.Companion.onTouchDown(pid, x, y)
-                if (isMouse) Input.onMousePress(windowX, GLFW_MOUSE_BUTTON_LEFT)
-            }
-            MotionEvent.ACTION_UP,
-            MotionEvent.ACTION_POINTER_UP -> addEvent {
-                Touch.Companion.onTouchUp(pid, x, y)
-                if (isMouse) Input.onMouseRelease(windowX, GLFW_MOUSE_BUTTON_LEFT)
-                // update mouse position, when the gesture is finished (no more touches down)?
-            }
-        }
-        detector.onTouchEvent(event)
-        return true
     }
 
     override fun onResume() {

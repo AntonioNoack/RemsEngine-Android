@@ -9,8 +9,13 @@ public class Rectangle2D {
     public double getMinX() {
         return minX;
     }
+
     public double getMaxX() {
         return maxX;
+    }
+
+    public double getWidth() {
+        return maxX - minX;
     }
 
 }

@@ -277,7 +277,7 @@ public class GL11 {
             new RuntimeException("Depth textures are not supported! (creating rgba texture instead)")
                     .printStackTrace();
             GLES11.glTexImage2D(target, level, GLES20.GL_RGBA, width, height, border,
-                    GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
+                    GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, (ByteBuffer) null);
             return;
         }
         if (buffer == null || buffer.remaining() == 0) {
@@ -288,7 +288,7 @@ public class GL11 {
             if (!disableTextures)
                 GLES11.glTexImage2D(target, level, internalFormat, width, height, border, format, type, buffer);
             else
-                GLES11.glTexImage2D(target, level, internalFormat, width, height, border, format, type, null);
+                GLES11.glTexImage2D(target, level, internalFormat, width, height, border, format, type, (ByteBuffer) null);
             check();
         }
     }
@@ -316,7 +316,7 @@ public class GL11 {
             format = GL_DEPTH_COMPONENT;
             type = GL_UNSIGNED_INT;
         }
-        GLES20.glTexImage2D(target, level, internalFormat, width, height, border, format, type, null);
+        GLES20.glTexImage2D(target, level, internalFormat, width, height, border, format, type, (ByteBuffer) null);
         check();
     }
 
@@ -384,14 +384,14 @@ public class GL11 {
             if (!disableTextures)
                 GLES20.glTexImage2D(target, level, internalFormat, width, height, border, format, type, buffer0);
             else
-                GLES20.glTexImage2D(target, level, internalFormat, width, height, border, format, type, null);
+                GLES20.glTexImage2D(target, level, internalFormat, width, height, border, format, type, (ByteBuffer) null);
         } else {
             buffer.put(data);
             buffer.rewind();
             if (!disableTextures)
                 GLES20.glTexImage2D(target, level, internalFormat, width, height, border, format, type, buffer);
             else
-                GLES20.glTexImage2D(target, level, internalFormat, width, height, border, format, type, null);
+                GLES20.glTexImage2D(target, level, internalFormat, width, height, border, format, type, (ByteBuffer) null);
         }
         Texture2D.bufferPool.returnBuffer(buffer0);
         check();
@@ -407,7 +407,6 @@ public class GL11 {
         check();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public static void glTexImage3D(int target, int level, int internalFormat, int width, int height, int depth, int border, int format, int type, int[] data) {
 
         if (print || true)
@@ -460,14 +459,14 @@ public class GL11 {
             if (!disableTextures)
                 GLES30.glTexImage3D(target, level, internalFormat, width, height, depth, border, format, type, buffer0);
             else
-                GLES30.glTexImage3D(target, level, internalFormat, width, height, depth, border, format, type, null);
+                GLES30.glTexImage3D(target, level, internalFormat, width, height, depth, border, format, type, (ByteBuffer) null);
         } else {
             buffer.put(data);
             buffer.rewind();
             if (!disableTextures)
                 GLES30.glTexImage3D(target, level, internalFormat, width, height, depth, border, format, type, buffer);
             else
-                GLES30.glTexImage3D(target, level, internalFormat, width, height, depth, border, format, type, null);
+                GLES30.glTexImage3D(target, level, internalFormat, width, height, depth, border, format, type, (ByteBuffer) null);
         }
         Texture2D.bufferPool.returnBuffer(buffer0);
         check();
@@ -592,7 +591,6 @@ public class GL11 {
 
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public static void glDrawBuffer(int buffer) {
         check();
         if (supportsDrawBuffers < 0) {
@@ -619,7 +617,6 @@ public class GL11 {
         check();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public static void glDrawBuffers(int[] buffers) {
         check();
         if (supportsDrawBuffers < 0) {
@@ -880,7 +877,6 @@ public class GL11 {
         check();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public static void glUniformMatrix4x3fv(int uniform, boolean rowMajor, FloatBuffer buffer) {
         check();
         GLES30.glUniformMatrix4x3fv(uniform, buffer.remaining() / 12, rowMajor, buffer);
@@ -908,7 +904,6 @@ public class GL11 {
         check();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public static void glVertexAttribDivisor(int index, int divisor) {
         check();
         if (!disableVertexAttribs) GLES30.glVertexAttribDivisor(index, divisor);
@@ -987,7 +982,6 @@ public class GL11 {
         check();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public static int glGenVertexArrays() {
         check();
         GLES30.glGenVertexArrays(1, tmpInt1, 0);
@@ -996,7 +990,6 @@ public class GL11 {
         return tmpInt1[0];
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public static void glDeleteVertexArrays(int i) {
         check();
         tmpInt1[0] = i;
@@ -1005,7 +998,6 @@ public class GL11 {
         check();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public static void glBindVertexArray(int array) {
         check();
         GLES30.glBindVertexArray(array);
@@ -1023,7 +1015,6 @@ public class GL11 {
         // check();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public static void glDrawArraysInstanced(int mode, int first, int count, int instanceCount) {
         check();
         checkProgramStatus();
@@ -1073,7 +1064,6 @@ public class GL11 {
         glGetError();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public static void glDrawElementsInstanced(int mode, int count, int type, long firstInstanceIndex, int instanceCount) {
 
         if (firstInstanceIndex > Integer.MAX_VALUE)

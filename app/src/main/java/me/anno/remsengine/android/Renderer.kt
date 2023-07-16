@@ -26,14 +26,14 @@ class Renderer : GLSurfaceView.Renderer {
 
     private val logger = LogManager.getLogger(Renderer::class)
 
-    @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         GFX.glThread = Thread.currentThread()
         GFX.maxBoundTextures = 1 // temporary
+        println("///////////// next session //////////////////")
         GFXState.newSession()
         invalidateBinding()
         testShaderVersions()
-        Texture2D.alwaysBindTexture = true
+        // Texture2D.alwaysBindTexture = true
         logger.info("Surface Created")
         frameIndex = 0
         GFX.check()
