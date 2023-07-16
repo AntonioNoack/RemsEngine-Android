@@ -4,13 +4,11 @@ import android.opengl.GLES20
 import android.opengl.GLES30.GL_MAX_SAMPLES
 import android.opengl.GLSurfaceView
 import android.os.Build
-import androidx.annotation.RequiresApi
 import me.anno.Engine
 import me.anno.config.DefaultConfig
 import me.anno.config.DefaultStyle
 import me.anno.gpu.*
 import me.anno.gpu.drawing.DrawRectangles
-import me.anno.gpu.texture.Texture2D
 import me.anno.input.Input
 import me.anno.remsengine.android.MainActivity.Companion.setStatic
 import me.anno.studio.StudioBase
@@ -26,12 +24,18 @@ class Renderer : GLSurfaceView.Renderer {
 
     private val logger = LogManager.getLogger(Renderer::class)
 
+    companion object {
+        fun newSession1() {
+            GFXState.newSession()
+            invalidateBinding()
+        }
+    }
+
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         GFX.glThread = Thread.currentThread()
         GFX.maxBoundTextures = 1 // temporary
         println("///////////// next session //////////////////")
-        GFXState.newSession()
-        invalidateBinding()
+        newSession1()
         testShaderVersions()
         // Texture2D.alwaysBindTexture = true
         logger.info("Surface Created")

@@ -35,8 +35,6 @@ import android.opengl.GLES31;
 import android.opengl.GLES32;
 import android.os.Build;
 
-import androidx.annotation.RequiresApi;
-
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
@@ -51,7 +49,7 @@ import me.anno.gpu.GFX;
 import me.anno.gpu.texture.Texture2D;
 import me.anno.utils.Warning;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "RedundantCast"})
 public class GL11 {
 
     // todo find the cause for the segfault
@@ -81,9 +79,6 @@ public class GL11 {
 
     // OpenGL is single-threaded, so we can use this static instance
     private static final int[] tmpInt1 = new int[1];
-    private static final int[] createdFramebuffers = new int[65536];
-    private static final int[] createdTextures = new int[65536];
-    private static final int[] boundTextures = new int[64];
     private static int activeTexture = 0;
     private static int boundFramebuffer, boundProgram;
 
@@ -99,9 +94,6 @@ public class GL11 {
     }
 
     public static void invalidateBinding() {
-        Arrays.fill(createdFramebuffers, 0);
-        Arrays.fill(createdTextures, 0);
-        Arrays.fill(boundTextures, 0);
         if (printTexBinds) System.out.println("Cleared all bindings");
         activeTexture = 0;
     }
@@ -205,13 +197,6 @@ public class GL11 {
         check();
         GLES11.glGenTextures(tex.length, tex, 0);
         if (print) System.out.println("glGenTextures() -> " + Arrays.toString(tex));
-        for (int i : tex) {
-            if (i < createdTextures.length) {
-                if (createdTextures[i] == i)
-                    throw new RuntimeException("glGenTextures returned " + i + " twice");
-                createdTextures[i] = i;
-            }
-        }
         check();
     }
 
@@ -225,15 +210,9 @@ public class GL11 {
 
     public static void glBindTexture(int target, int pointer) {
         check();
-        if (pointer < createdTextures.length && createdTextures[pointer] != pointer) {
-            // may be called after a new session; idk, may be an engine bug
-            new RuntimeException("Cannot bind undefined texture").printStackTrace();
-            return;
-        }
         GLES11.glBindTexture(target, pointer);
         if (print || printTexBinds)
             System.out.println("glBindTexture[" + activeTexture + "](" + getTextureTarget(target) + ", " + pointer + ")");
-        boundTextures[activeTexture] = pointer;
         check();
     }
 
@@ -258,19 +237,17 @@ public class GL11 {
 
     public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, ByteBuffer buffer) {
 
-        if (print || true)
+        if (print)
             System.out.println("glTexImage2D(" + getTextureTarget(target) + ", level " + level +
                     ", internal " + getFormat(internalFormat) + ", " + width + " x " + height + ", " + border +
                     ", format " + getFormat(format) + ", " + getType(type) +
                     ", data: " + buffer);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            if (!TextureFormat.isSupported(internalFormat, format, type)) {
-                throw new IllegalArgumentException("Unsupported format: " +
-                        getFormat(internalFormat) + ", " +
-                        getFormat(format) + ", " +
-                        getType(type));
-            }
+        if (!TextureFormat.isSupported(internalFormat, format, type)) {
+            throw new IllegalArgumentException("Unsupported format: " +
+                    getFormat(internalFormat) + ", " +
+                    getFormat(format) + ", " +
+                    getType(type));
         }
 
         if (format == GL_DEPTH_COMPONENT && !hasExtension("OES_depth_texture")) {
@@ -295,7 +272,7 @@ public class GL11 {
 
     public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, long dataPointer) {
 
-        if (print || true)
+        if (print)
             System.out.println("glTexImage2D(" + getTextureTarget(target) + ", level " + level +
                     ", internal " + getFormat(internalFormat) + ", " + width + " x " + height + ", " + border +
                     ", format " + getFormat(format) + ", " + getType(type) + ", data: *" + dataPointer);
@@ -324,7 +301,7 @@ public class GL11 {
         if (Build.VERSION.SDK_INT >= 21) {
             check();
             GLES31.glTexStorage2DMultisample(target, samples, internalFormat, width, height, fixedSamplePositions);
-            if (print || true)
+            if (print)
                 System.out.println("glTexImage2DMultisample(" + getTextureTarget(target) +
                         ", internal " + getFormat(internalFormat) + ", " + width + " x " + height + ", fixed?: " + fixedSamplePositions);
             check();
@@ -334,7 +311,7 @@ public class GL11 {
 
     public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, int[] data) {
 
-        if (print || true)
+        if (print)
             System.out.println("glTexImage2D(" + getTextureTarget(target) + ", level " + level +
                     ", internal " + getFormat(internalFormat) + ", " + width + " x " + height + ", " + border +
                     ", format " + getFormat(format) + ", " + getType(type) + ", data[int]: x" + data.length);
@@ -409,7 +386,7 @@ public class GL11 {
 
     public static void glTexImage3D(int target, int level, int internalFormat, int width, int height, int depth, int border, int format, int type, int[] data) {
 
-        if (print || true)
+        if (print)
             System.out.println("glTexImage3D(" + getTextureTarget(target) + ", level " + level +
                     ", internal " + getFormat(internalFormat) + ", " + width + " x " + height + " x " + depth + ", " + border +
                     ", format " + getFormat(format) + ", " + getType(type) + ", data[int]: x" + data.length);
@@ -472,9 +449,44 @@ public class GL11 {
         check();
     }
 
+    public static void glTexImage3D(int target, int level, int internalFormat, int width, int height, int depth, int border, int format, int type, ByteBuffer buffer) {
+
+        if (print)
+            System.out.println("glTexImage2D(" + getTextureTarget(target) + ", level " + level +
+                    ", internal " + getFormat(internalFormat) + ", " + width + " x " + height + ", " + border +
+                    ", format " + getFormat(format) + ", " + getType(type) +
+                    ", data: " + buffer);
+
+        if (!TextureFormat.isSupported(internalFormat, format, type)) {
+            throw new IllegalArgumentException("Unsupported format: " +
+                    getFormat(internalFormat) + ", " +
+                    getFormat(format) + ", " +
+                    getType(type));
+        }
+
+        if (format == GL_DEPTH_COMPONENT && !hasExtension("OES_depth_texture")) {
+            new RuntimeException("Depth textures are not supported! (creating rgba texture instead)")
+                    .printStackTrace();
+            GLES30.glTexImage3D(target, level, GLES20.GL_RGBA, width, height, depth, border,
+                    GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, (ByteBuffer) null);
+            return;
+        }
+        if (buffer == null || buffer.remaining() == 0) {
+            glTexImage2D(target, level, internalFormat, width, height, border, format, type, 0L);
+        } else {
+            check();
+            if (internalFormat == GL_LUMINANCE) format = internalFormat;// OpenGL ES is stricter
+            if (!disableTextures)
+                GLES30.glTexImage3D(target, level, internalFormat, width, height, depth, border, format, type, buffer);
+            else
+                GLES30.glTexImage3D(target, level, internalFormat, width, height, depth, border, format, type, (ByteBuffer) null);
+            check();
+        }
+    }
+
     public static void glTexParameteri(int target, int key, int value) {
         check();
-        if (print || true) System.out.println("glTexParameteri(" + getTextureTarget(target) + ", " +
+        if (print) System.out.println("glTexParameteri(" + getTextureTarget(target) + ", " +
                 getTexKey(key) + ", " + getTexValue(value) + ")");
         if (value == GLES32.GL_CLAMP_TO_BORDER && (major < 3 || minor < 2)) {
             value = GL_CLAMP_TO_EDGE;
@@ -531,13 +543,6 @@ public class GL11 {
         check();
         if (pointer < 0)
             throw new RuntimeException("Cannot bind fb " + pointer);
-        if (pointer < createdFramebuffers.length && createdFramebuffers[pointer] != pointer) {
-            if (createdFramebuffers[pointer] < pointer) {
-                throw new RuntimeException("Cannot bind fb " + pointer + ", it never was created");
-            } else {
-                throw new RuntimeException("Cannot bind fb " + pointer + ", it was destroyed");
-            }
-        }
         if (!disableFramebuffers) GLES20.glBindFramebuffer(target, pointer);
         if (print)
             System.out.println("glBindFramebuffer(" + getTextureTarget(target) + ", " + pointer + ")");
@@ -558,12 +563,6 @@ public class GL11 {
         int address = tmpInt1[0];
         if (print || printFramebuffers) System.out.println("glGenFramebuffers() -> " + address);
         check();
-        if (address >= 0 && address < createdFramebuffers.length) {
-            if (createdFramebuffers[address] == address) {
-                throw new RuntimeException("glGenFramebuffers() returned " + address + " twice");
-            }
-            createdFramebuffers[address] = address;
-        }
         return address;
     }
 
@@ -676,9 +675,6 @@ public class GL11 {
     }
 
     public static void glDeleteFramebuffers(int framebuffer) {
-        if (framebuffer < createdFramebuffers.length && createdFramebuffers[framebuffer] != framebuffer)
-            throw new RuntimeException("Cannot delete non-existing framebuffer");
-        if (framebuffer < createdFramebuffers.length) createdFramebuffers[framebuffer]++;
         if (boundFramebuffer == framebuffer)
             throw new RuntimeException("Cannot delete a bound framebuffer");
         tmpInt1[0] = framebuffer;
@@ -1141,23 +1137,6 @@ public class GL11 {
 
     public static void glDeleteTextures(int[] textures) {
         check();
-        for (int texToDelete : textures) {
-            if (texToDelete < createdTextures.length) {
-                if (createdTextures[texToDelete] == texToDelete) {
-                    createdTextures[texToDelete]++;
-                } else if (!warnedDTT) {
-                    warnedDTT = true;
-                    new RuntimeException("Cannot delete texture " + texToDelete + " twice")
-                            .printStackTrace();
-                }
-            }
-            for (int boundTexture : boundTextures) {
-                if (texToDelete == boundTexture) {
-                    new RuntimeException("Cannot delete bound texture " + texToDelete)
-                            .printStackTrace();
-                }
-            }
-        }
         GLES20.glDeleteTextures(textures.length, textures, 0);
         if (print || printDeletes)
             System.out.println("glDeleteTexture(" + Arrays.toString(textures) + ")");

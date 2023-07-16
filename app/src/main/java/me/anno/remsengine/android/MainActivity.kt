@@ -15,8 +15,10 @@ import androidx.core.view.GestureDetectorCompat
 import me.anno.config.DefaultConfig.style
 import me.anno.ecs.components.mesh.Mesh
 import me.anno.ecs.components.shaders.SkyBox
+import me.anno.engine.RemsEngine
 import me.anno.engine.ui.render.Renderers.previewRenderer
 import me.anno.gpu.GFX
+import me.anno.gpu.GFXState.newSession
 import me.anno.gpu.GFXState.useFrame
 import me.anno.gpu.OSWindow
 import me.anno.gpu.debug.DebugGPUStorage
@@ -81,18 +83,11 @@ class MainActivity : AppCompatActivity(),
 
         val engine = this.engine ?: TestStudio {
             val skyPanel = object : Panel(style) {
-                val sky = object : SkyBox() {
-                    override fun getMesh(): Mesh {
-                        return flat11.both
-                    }
-                }
+                val sky = SkyBox()
                 val cameraMatrix = Matrix4f()
                 var first = true
                 override val canDrawOverBorders get() = true
                 override fun onDraw(x0: Int, y0: Int, x1: Int, y1: Int) {
-                    // println("Drawing $x0-$x1,$y0-$y1")
-                    // super.onDraw(x0, y0, x1, y1)
-                    DrawRectangles.drawRect(x0, y0, x1 - x0, y1 - y0, -1)
                     useFrame(previewRenderer) {
                         sky.nadirSharpness = 10f
                         val shader = sky.shader!!.value
@@ -112,7 +107,7 @@ class MainActivity : AppCompatActivity(),
                 }
             }.apply { weight = 1f }
             val snakePanel = Snake().apply { weight = 1f }
-            listOf(snakePanel)
+            listOf(skyPanel)
         }
 
         StudioBase.instance = engine
@@ -232,6 +227,7 @@ class MainActivity : AppCompatActivity(),
 
     override fun onResume() {
         super.onResume()
+        Renderer.newSession1()
         glSurfaceView?.onResume()
         LOGGER.info("Resumed")
     }
