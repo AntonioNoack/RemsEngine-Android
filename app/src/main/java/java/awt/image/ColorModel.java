@@ -1,5 +1,6 @@
 package java.awt.image;
 
+@SuppressWarnings("unused")
 public class ColorModel {
     public boolean hasAlpha() {
         return true;

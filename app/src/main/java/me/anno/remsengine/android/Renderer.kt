@@ -3,11 +3,12 @@ package me.anno.remsengine.android
 import android.opengl.GLES20
 import android.opengl.GLES30.GL_MAX_SAMPLES
 import android.opengl.GLSurfaceView
-import android.os.Build
 import me.anno.Engine
 import me.anno.config.DefaultConfig
 import me.anno.config.DefaultStyle
 import me.anno.gpu.*
+import me.anno.gpu.Logo.drawLogo
+import me.anno.gpu.Logo.logoBackgroundColor
 import me.anno.gpu.drawing.DrawRectangles
 import me.anno.input.Input
 import me.anno.remsengine.android.MainActivity.Companion.setStatic
@@ -79,22 +80,16 @@ class Renderer : GLSurfaceView.Renderer {
             GL11C.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
             GL11C.glViewport(0, 0, windowX.width, windowX.height)
 
-            // todo adjust to work like in Browser
-
-            when (val fi = frameIndex++) {
+            when (frameIndex++) {
                 0 -> {
-                    println("Initializing graphics")
                     // GFXBase.prepareForRendering(null)
                     GFXBase.setStatic("capabilities", GL.getCapabilities())
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                        GFX.maxSamples = max(1, GL11C.glGetInteger(GL_MAX_SAMPLES))
-                    } else GFX.maxSamples = 1
+                    GFX.maxSamples = max(1, GL11C.glGetInteger(GL_MAX_SAMPLES))
                     // my emulator says 4, but only supports OpenGL ES 3.0...
                     if (version10x < 31) GFX.maxSamples = 1
                     drawLogo(windowX.width, windowX.height, false)
                 }
                 in 1 until numLogoFrames -> {
-                    println("Drawing logo $fi/$numLogoFrames")
                     drawLogo(windowX.width, windowX.height, false)
                 }
                 numLogoFrames -> {
@@ -110,8 +105,6 @@ class Renderer : GLSurfaceView.Renderer {
                     GFX.supportsDepthTextures = false
                 }
                 else -> {
-                    // println("Drawing window $fi")
-                    // todo check whether this still works
                     GFXBase.updateWindows()
                     Engine.updateTime()
                     Input.pollControllers(windowX)
@@ -130,6 +123,5 @@ class Renderer : GLSurfaceView.Renderer {
             e.printStackTrace()
         }
     }
-
 
 }

@@ -3,7 +3,6 @@ package me.anno.remsengine.android
 import android.view.KeyEvent.*
 import me.anno.input.KeyCombination
 import me.anno.input.KeyCombination.Companion.keyMapping
-import me.anno.remsengine.android.MainActivity.Companion.GLFW_KEY_ESCAPE
 import me.anno.remsengine.android.MainActivity.Companion.GLFW_MOUSE_BUTTON_LEFT
 import me.anno.remsengine.android.MainActivity.Companion.GLFW_MOUSE_BUTTON_MIDDLE
 import me.anno.remsengine.android.MainActivity.Companion.GLFW_MOUSE_BUTTON_RIGHT
@@ -63,7 +62,7 @@ object KeyMap {
         put(GLFW_MOUSE_BUTTON_RIGHT, "right")
         put(GLFW_MOUSE_BUTTON_MIDDLE, "middle")
         put(KEYCODE_FORWARD, 5, "mouseForward")
-        put(KEYCODE_BACK, GLFW_KEY_ESCAPE, "escape")
+        put(KEYCODE_BACK, 256, "escape")
         for (i in 0..9) put(
             KEYCODE_NUMPAD_0 + i,
             320 + i,

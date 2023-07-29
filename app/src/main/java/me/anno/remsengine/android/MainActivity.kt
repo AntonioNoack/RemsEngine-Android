@@ -81,7 +81,7 @@ class MainActivity : AppCompatActivity(),
         LOGGER.info("s1: $src1, ${src1.exists}, ${src1.mkdirs()}")
         LOGGER.info("s2: $src2, ${src2.exists}, ${src2.mkdirs()}")
 
-        val engine = this.engine ?: TestStudio {
+        val engine = this.engine ?: TestStudio("Android") {
             val skyPanel = object : Panel(style) {
                 val sky = SkyBox()
                 val cameraMatrix = Matrix4f()
@@ -248,16 +248,6 @@ class MainActivity : AppCompatActivity(),
         const val GLFW_MOUSE_BUTTON_LEFT = 0
         const val GLFW_MOUSE_BUTTON_RIGHT = 1
         const val GLFW_MOUSE_BUTTON_MIDDLE = 2
-        const val GLFW_KEY_ESCAPE = 256
-
-        /*fun Any.setProperty(name: String, value: Any?) {
-            val property = this::class.memberProperties
-                .first { it.name == name }
-                .apply { isAccessible = true }
-            @Suppress("unchecked_cast")
-            property as KMutableProperty1<Any, Any?>
-            property.set(this, value)
-        }*/
 
         fun Any.setStatic(name: String, value: Any?) {
             val property = this.javaClass.getField(name)

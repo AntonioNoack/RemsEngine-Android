@@ -3,6 +3,7 @@ package java.awt;
 import java.io.File;
 import java.util.Locale;
 
+@SuppressWarnings("unused")
 public class GraphicsEnvironment {
 
     private static GraphicsEnvironment instance;

@@ -279,13 +279,11 @@ public class GL11 {
 
         if (dataPointer != 0) throw new RuntimeException("Expected data pointer to be null");
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            if (!TextureFormat.isSupported(internalFormat, format, type)) {
-                throw new IllegalArgumentException("Unsupported format: " +
-                        getFormat(internalFormat) + ", " +
-                        getFormat(format) + ", " +
-                        getType(type));
-            }
+        if (!TextureFormat.isSupported(internalFormat, format, type)) {
+            throw new IllegalArgumentException("Unsupported format: " +
+                    getFormat(internalFormat) + ", " +
+                    getFormat(format) + ", " +
+                    getType(type));
         }
 
         check();
@@ -330,13 +328,11 @@ public class GL11 {
             format = GL_RGB;// OpenGL ES is stricter than OpenGL
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            if (!TextureFormat.isSupported(internalFormat, format, type)) {
-                throw new IllegalArgumentException("Unsupported format: " +
-                        getFormat(internalFormat) + ", " +
-                        getFormat(format) + ", " +
-                        getType(type));
-            }
+        if (!TextureFormat.isSupported(internalFormat, format, type)) {
+            throw new IllegalArgumentException("Unsupported format: " +
+                    getFormat(internalFormat) + ", " +
+                    getFormat(format) + ", " +
+                    getType(type));
         }
 
         check();
@@ -405,13 +401,11 @@ public class GL11 {
             format = GL_RGB;// OpenGL ES is stricter than OpenGL
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            if (!TextureFormat.isSupported(internalFormat, format, type)) {
-                throw new IllegalArgumentException("Unsupported format: " +
-                        getFormat(internalFormat) + ", " +
-                        getFormat(format) + ", " +
-                        getType(type));
-            }
+        if (!TextureFormat.isSupported(internalFormat, format, type)) {
+            throw new IllegalArgumentException("Unsupported format: " +
+                    getFormat(internalFormat) + ", " +
+                    getFormat(format) + ", " +
+                    getType(type));
         }
 
         check();
@@ -580,14 +574,10 @@ public class GL11 {
             int x0, int y0, int w0, int h0,
             int x1, int y1, int w1, int h1,
             int bits, int flags) {
-        if (Build.VERSION.SDK_INT >= 18) {
-            check();
-            if (!disableFramebuffers)
-                GLES30.glBlitFramebuffer(x0, y0, w0, h0, x1, y1, w1, h1, bits, flags);
-            check();
-        } else
-            throw new RuntimeException("Operation glTexImage2DMultisample is not supported in Android API " + Build.VERSION.SDK_INT + ", min 18 is required");
-
+        check();
+        if (!disableFramebuffers)
+            GLES30.glBlitFramebuffer(x0, y0, w0, h0, x1, y1, w1, h1, bits, flags);
+        check();
     }
 
     public static void glDrawBuffer(int buffer) {
@@ -1044,7 +1034,7 @@ public class GL11 {
 
     private static void checkProgramStatus() {
         // for testing
-        if (print && false) {
+        if (print) {
             check();
             GLES30.glValidateProgram(boundProgram);
             GLES30.glGetProgramiv(boundProgram, GL_VALIDATE_STATUS, tmpInt1, 0);
@@ -1112,7 +1102,7 @@ public class GL11 {
     }
 
     public static void glRenderbufferStorageMultisample(int target, int samples, int format, int width, int height) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && major >= 3) {
+        if (major >= 3) {
             if (!disableFramebuffers)
                 GLES30.glRenderbufferStorageMultisample(target, samples, format, width, height);
             if (print) System.out.println("glRenderbufferStorageMultisample(...)");
@@ -1132,8 +1122,6 @@ public class GL11 {
             GLES20.glFramebufferRenderbuffer(target, attachment, rbTarget, renderbuffer);
         if (print) System.out.println("glFramebufferRenderbuffer(...)");
     }
-
-    private static boolean warnedDTT = false;
 
     public static void glDeleteTextures(int[] textures) {
         check();

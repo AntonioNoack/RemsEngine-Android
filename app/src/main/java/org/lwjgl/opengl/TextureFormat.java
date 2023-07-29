@@ -93,6 +93,7 @@ public class TextureFormat {
         this.type = type;
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public static boolean isSupported(int internalFormat, int format, int type) {
         for (TextureFormat tex : supportedFormats) {
             if (tex.internalFormat == internalFormat && tex.format == format && tex.type == type)
@@ -101,7 +102,7 @@ public class TextureFormat {
         return false;
     }
 
-    public static TextureFormat[] supportedFormats = new TextureFormat[]{
+    private static final TextureFormat[] supportedFormats = new TextureFormat[]{
             // unsized formats:
             new TextureFormat(GL_RGB, GL_RGB, GL_UNSIGNED_BYTE),
             new TextureFormat(GL_RGB, GL_RGB, GL_UNSIGNED_SHORT_5_6_5),
