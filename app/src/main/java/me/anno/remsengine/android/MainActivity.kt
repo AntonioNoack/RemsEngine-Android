@@ -13,22 +13,17 @@ import android.view.MotionEvent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GestureDetectorCompat
 import me.anno.config.DefaultConfig.style
-import me.anno.ecs.components.mesh.Mesh
-import me.anno.ecs.components.shaders.SkyBox
-import me.anno.engine.RemsEngine
+import me.anno.ecs.components.shaders.Skybox
 import me.anno.engine.ui.render.Renderers.previewRenderer
 import me.anno.gpu.GFX
-import me.anno.gpu.GFXState.newSession
 import me.anno.gpu.GFXState.useFrame
 import me.anno.gpu.OSWindow
 import me.anno.gpu.debug.DebugGPUStorage
-import me.anno.gpu.drawing.DrawRectangles
 import me.anno.gpu.drawing.Perspective
 import me.anno.input.Input
-import me.anno.input.Touch
+import me.anno.input.Key
 import me.anno.io.files.thumbs.Thumbs
 import me.anno.io.files.thumbs.ThumbsExt
-import me.anno.mesh.Shapes.flat11
 import me.anno.remsengine.android.KeyMap.keyCodeMapping
 import me.anno.studio.StudioBase
 import me.anno.studio.StudioBase.Companion.addEvent
@@ -83,7 +78,7 @@ class MainActivity : AppCompatActivity(),
 
         val engine = this.engine ?: TestStudio("Android") {
             val skyPanel = object : Panel(style) {
-                val sky = SkyBox()
+                val sky = Skybox()
                 val cameraMatrix = Matrix4f()
                 var first = true
                 override val canDrawOverBorders get() = true
@@ -183,8 +178,8 @@ class MainActivity : AppCompatActivity(),
 
     override fun onLongPress(e: MotionEvent?) {
         addEvent {
-            Input.onMousePress(windowX, GLFW_MOUSE_BUTTON_RIGHT)
-            Input.onMouseRelease(windowX, GLFW_MOUSE_BUTTON_RIGHT)
+            Input.onMousePress(windowX, Key.BUTTON_RIGHT)
+            Input.onMouseRelease(windowX, Key.BUTTON_RIGHT)
             LOGGER.info("Long Press")
         }
     }
@@ -211,12 +206,18 @@ class MainActivity : AppCompatActivity(),
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         println("Key-down: $keyCode -> ${keyCodeMapping[keyCode]}")
-        addEvent { Input.onKeyPressed(windowX, keyCodeMapping[keyCode] ?: keyCode) }
+        val key = keyCodeMapping[keyCode]
+        if (key != null) {
+            addEvent { Input.onKeyPressed(windowX, key) }
+        }
         return true
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-        addEvent { Input.onKeyReleased(windowX, keyCodeMapping[keyCode] ?: keyCode) }
+        val key = keyCodeMapping[keyCode]
+        if (key != null) {
+            addEvent { Input.onKeyReleased(windowX, key) }
+        }
         return true
     }
 

@@ -65,7 +65,7 @@ dependencies {
     // implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.google.android.material:material:1.6.1'
     //noinspection GradlePath
-    implementation files('C:/Users/Antonio/Documents/IdeaProjects/VideoStudio/out/artifacts/Android/VideoStudio.jar')
+    implementation files('C:/Users/Antonio/Documents/IdeaProjects/RemsEngine/out/artifacts/Android/RemsEngine.jar')
     //noinspection GradlePath
     implementation files('C:/Users/Antonio/Documents/IdeaProjects/RemsStudio/out/artifacts/Mod/RemsStudio-clear.jar')
     testImplementation 'junit:junit:4.13.2'

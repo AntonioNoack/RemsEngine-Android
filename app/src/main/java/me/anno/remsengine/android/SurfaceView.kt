@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.opengl.GLSurfaceView
 import android.view.MotionEvent
 import me.anno.input.Input
+import me.anno.input.Key
 import me.anno.input.Touch
 import me.anno.studio.StudioBase
 
@@ -28,12 +29,12 @@ class SurfaceView(private val ctx: MainActivity) : GLSurfaceView(ctx) {
             MotionEvent.ACTION_DOWN,
             MotionEvent.ACTION_POINTER_DOWN -> StudioBase.addEvent {
                 Touch.onTouchDown(pid, x, y)
-                if (isMouse) Input.onMousePress(ctx.windowX, MainActivity.GLFW_MOUSE_BUTTON_LEFT)
+                if (isMouse) Input.onMousePress(ctx.windowX, Key.BUTTON_LEFT)
             }
             MotionEvent.ACTION_UP,
             MotionEvent.ACTION_POINTER_UP -> StudioBase.addEvent {
                 Touch.onTouchUp(pid, x, y)
-                if (isMouse) Input.onMouseRelease(ctx.windowX, MainActivity.GLFW_MOUSE_BUTTON_LEFT)
+                if (isMouse) Input.onMouseRelease(ctx.windowX, Key.BUTTON_LEFT)
                 // update mouse position, when the gesture is finished (no more touches down)?
             }
         }
