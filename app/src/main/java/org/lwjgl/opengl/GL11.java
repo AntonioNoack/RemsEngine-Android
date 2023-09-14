@@ -380,6 +380,16 @@ public class GL11 {
         check();
     }
 
+    public static void glTexSubImage2D(int target, int level, int x, int y, int w, int h, int format, int type, IntBuffer data) {
+        check();
+        if (!disableTextures) GLES20.glTexSubImage2D(target, level, x, y, w, h, format, type, data);
+        if (print || glGetError() != 0)
+            System.out.println("glTexSubImage2D(" + getTextureTarget(target) + ", level " + level + ", " + x +
+                    ", " + y + ", " + w + ", " + h + ", " + getFormat(format) +
+                    ", " + getType(type) + ", " + data + ")");
+        check();
+    }
+
     public static void glTexImage3D(int target, int level, int internalFormat, int width, int height, int depth, int border, int format, int type, int[] data) {
 
         if (print)
@@ -625,7 +635,7 @@ public class GL11 {
 
     private static HashSet<String> extensions;
 
-    private static boolean hasExtension(final String ext) {
+    public static boolean hasExtension(final String ext) {
         if (extensions == null) {
             String[] ext1 = GLES20.glGetString(GLES20.GL_EXTENSIONS).split("\\R");
             extensions = new HashSet<>(ext1.length);
@@ -956,6 +966,7 @@ public class GL11 {
     }
 
     public static void glBufferSubData(int target, long offset, ByteBuffer buffer) {
+        if (buffer.limit() == 0) return;
         if (offset > Integer.MAX_VALUE) throw new RuntimeException("Max allowed offset is 2GBi");
         check();
         // check the memory is valid

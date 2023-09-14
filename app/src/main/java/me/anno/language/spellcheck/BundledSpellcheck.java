@@ -1,6 +1,6 @@
 package me.anno.language.spellcheck;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Queue;
 
 import me.anno.language.Language;
 
@@ -8,7 +8,7 @@ import me.anno.language.Language;
 public class BundledSpellcheck {
 
     @SuppressWarnings("CommentedOutCode")
-    public static void runInstance(Language language, ConcurrentLinkedQueue<Object> queue) {
+    public static void runInstance(Language language, Queue<Object> queue) {
         /*try {
             CommandLine instance = new CommandLine(language.getCode());
             while (!Engine.INSTANCE.getShutdown()) {

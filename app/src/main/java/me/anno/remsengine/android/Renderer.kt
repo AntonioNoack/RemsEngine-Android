@@ -102,7 +102,7 @@ class Renderer : GLSurfaceView.Renderer {
                     DefaultStyle.baseTheme["customList.spacing", "light"] = 10
                     GFX.check()
                     GFXBase.init2(null)
-                    GFX.supportsDepthTextures = false
+                    GFX.supportsDepthTextures = hasExtension("OES_depth_texture")
                 }
                 else -> {
                     GFXBase.updateWindows()

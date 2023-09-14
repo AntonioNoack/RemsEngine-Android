@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GestureDetectorCompat
 import me.anno.config.DefaultConfig.style
 import me.anno.ecs.components.shaders.Skybox
+import me.anno.engine.RemsEngine
 import me.anno.engine.ui.render.Renderers.previewRenderer
 import me.anno.gpu.GFX
 import me.anno.gpu.GFXState.useFrame
@@ -76,6 +77,7 @@ class MainActivity : AppCompatActivity(),
         LOGGER.info("s1: $src1, ${src1.exists}, ${src1.mkdirs()}")
         LOGGER.info("s2: $src2, ${src2.exists}, ${src2.mkdirs()}")
 
+        this.engine = RemsEngine()
         val engine = this.engine ?: TestStudio("Android") {
             val skyPanel = object : Panel(style) {
                 val sky = Skybox()
@@ -150,25 +152,25 @@ class MainActivity : AppCompatActivity(),
 
     lateinit var detector: GestureDetectorCompat
 
-    override fun onDown(e: MotionEvent?): Boolean {
+    override fun onDown(e: MotionEvent): Boolean {
         return false
     }
 
-    override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+    override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
         return false
     }
 
-    override fun onSingleTapUp(e: MotionEvent?): Boolean {
+    override fun onSingleTapUp(e: MotionEvent): Boolean {
         return false
     }
 
-    override fun onDoubleTapEvent(e: MotionEvent?): Boolean {
+    override fun onDoubleTapEvent(e: MotionEvent): Boolean {
         return false
     }
 
     override fun onFling(
-        e1: MotionEvent?,
-        e2: MotionEvent?,
+        e1: MotionEvent,
+        e2: MotionEvent,
         velocityX: Float,
         velocityY: Float
     ): Boolean {
@@ -176,7 +178,7 @@ class MainActivity : AppCompatActivity(),
         return false
     }
 
-    override fun onLongPress(e: MotionEvent?) {
+    override fun onLongPress(e: MotionEvent) {
         addEvent {
             Input.onMousePress(windowX, Key.BUTTON_RIGHT)
             Input.onMouseRelease(windowX, Key.BUTTON_RIGHT)
@@ -184,19 +186,19 @@ class MainActivity : AppCompatActivity(),
         }
     }
 
-    override fun onShowPress(e: MotionEvent?) {
+    override fun onShowPress(e: MotionEvent) {
         // mmh...
     }
 
-    override fun onDoubleTap(e: MotionEvent?): Boolean {
+    override fun onDoubleTap(e: MotionEvent): Boolean {
         // double click, but we have implemented that ourselves anyways
         addEvent { DebugGPUStorage.openMenu() }
         return false
     }
 
     override fun onScroll(
-        e1: MotionEvent?,
-        e2: MotionEvent?,
+        e1: MotionEvent,
+        e2: MotionEvent,
         distanceX: Float,
         distanceY: Float
     ): Boolean {
