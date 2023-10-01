@@ -35,6 +35,12 @@ import me.anno.utils.Logging
 import me.anno.utils.OS
 import org.apache.logging.log4j.LogManager
 import org.joml.Matrix4f
+import org.lwjgl.opengl.GL11
+
+// todo we need depth texture support
+//  -> check if we have fp16/32 texture support
+//  -> add a deferred layer for that, and link it in the corresponding framebuffers
+//  -> fill it in the shader properly: gl_FragCoord.z probably
 
 class MainActivity : AppCompatActivity(),
     GestureDetector.OnGestureListener,
@@ -46,11 +52,11 @@ class MainActivity : AppCompatActivity(),
 
     private var engine: StudioBase? = null
 
-    val windowX = OSWindow("")
+    val osWindow = OSWindow("")
 
     init {
         GFX.windows.clear()
-        GFX.windows.add(windowX)
+        GFX.windows.add(osWindow)
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -128,6 +134,7 @@ class MainActivity : AppCompatActivity(),
         val major = version.shr(16)
         val minor = version.and(0xffff)
 
+        GL11.setVersion(major, minor)
         LOGGER.info("OpenGL ES Version: $major.$minor")
 
         if (supportsEs2) {
@@ -180,8 +187,8 @@ class MainActivity : AppCompatActivity(),
 
     override fun onLongPress(e: MotionEvent) {
         addEvent {
-            Input.onMousePress(windowX, Key.BUTTON_RIGHT)
-            Input.onMouseRelease(windowX, Key.BUTTON_RIGHT)
+            Input.onMousePress(osWindow, Key.BUTTON_RIGHT)
+            Input.onMouseRelease(osWindow, Key.BUTTON_RIGHT)
             LOGGER.info("Long Press")
         }
     }
@@ -210,7 +217,7 @@ class MainActivity : AppCompatActivity(),
         println("Key-down: $keyCode -> ${keyCodeMapping[keyCode]}")
         val key = keyCodeMapping[keyCode]
         if (key != null) {
-            addEvent { Input.onKeyPressed(windowX, key) }
+            addEvent { Input.onKeyPressed(osWindow, key) }
         }
         return true
     }
@@ -218,7 +225,7 @@ class MainActivity : AppCompatActivity(),
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
         val key = keyCodeMapping[keyCode]
         if (key != null) {
-            addEvent { Input.onKeyReleased(windowX, key) }
+            addEvent { Input.onKeyReleased(osWindow, key) }
         }
         return true
     }

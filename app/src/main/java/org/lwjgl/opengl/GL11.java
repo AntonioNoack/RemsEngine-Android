@@ -633,6 +633,17 @@ public class GL11 {
         check();
     }
 
+    public static void glReadBuffer(int buffer) {
+        if (major >= 3) {
+            GLES30.glReadBuffer(buffer);
+        } else System.err.println("glReadBuffer is not supported!");
+    }
+
+    public static void glDrawBuffers(int buffer) {
+        tmpInt1[0] = buffer;
+        glDrawBuffers(tmpInt1);
+    }
+
     private static HashSet<String> extensions;
 
     public static boolean hasExtension(final String ext) {
@@ -803,6 +814,13 @@ public class GL11 {
         check();
     }
 
+    public static void glUniform1fv(int uniform, float[] x) {
+        check();
+        GLES20.glUniform1fv(uniform, x.length, x, 0);
+        if (print) System.out.println("glUniform1fv(" + uniform + ", " + Arrays.toString(x) + ")");
+        check();
+    }
+
     public static void glUniform2i(int uniform, int x, int y) {
         check();
         GLES20.glUniform2i(uniform, x, y);
@@ -814,6 +832,13 @@ public class GL11 {
         check();
         GLES20.glUniform2f(uniform, x, y);
         if (print) System.out.println("glUniform2f(" + uniform + ", " + x + ", " + y + ")");
+        check();
+    }
+
+    public static void glUniform2fv(int uniform, float[] v) {
+        check();
+        GLES20.glUniform2fv(uniform, v.length / 2, v, 0);
+        if (print) System.out.println("glUniform2f(" + uniform + ", " + Arrays.toString(v) + ")");
         check();
     }
 
@@ -833,11 +858,18 @@ public class GL11 {
         check();
     }
 
-    public static void glUniform3fv(int uniform, FloatBuffer data) {
+    public static void glUniform3fv(int uniform, FloatBuffer v) {
         check();
-        GLES20.glUniform3fv(uniform, data.remaining() / 3, data);
+        GLES20.glUniform3fv(uniform, v.remaining() / 3, v);
         if (print)
-            System.out.println("glUniform3fv(" + uniform + ", " + data.remaining() / 3 + ", " + data + ")");
+            System.out.println("glUniform3fv(" + uniform + ", " + v.remaining() / 3 + ", " + v + ")");
+        check();
+    }
+
+    public static void glUniform3fv(int uniform, float[] v) {
+        check();
+        GLES20.glUniform3fv(uniform, v.length / 3, v, 0);
+        if (print) System.out.println("glUniform3fv(" + uniform + ", " + Arrays.toString(v) + ")");
         check();
     }
 
@@ -861,6 +893,14 @@ public class GL11 {
         check();
         GLES20.glUniform4fv(uniform, buffer.remaining() / 4, buffer);
         if (print) System.out.println("glUniform4fv(" + uniform + ", " + buffer + ")");
+        check();
+    }
+
+    public static void glUniform4fv(int uniform, float[] buffer) {
+        check();
+        GLES20.glUniform4fv(uniform, buffer.length / 4, buffer, 0);
+        if (print)
+            System.out.println("glUniform4fv(" + uniform + ", " + Arrays.toString(buffer) + ")");
         check();
     }
 
@@ -1118,7 +1158,7 @@ public class GL11 {
                 GLES30.glRenderbufferStorageMultisample(target, samples, format, width, height);
             if (print) System.out.println("glRenderbufferStorageMultisample(...)");
         } else {
-            System.err.println("glRenderbufferStorageMultisample not supported");
+            System.err.println("glRenderbufferStorageMultisample not supported, v" + major + "." + minor);
             glRenderbufferStorage(target, format, width, height);
         }
     }
@@ -1201,6 +1241,16 @@ public class GL11 {
         GLES11.glReadPixels(x, y, w, h, format, type, tmp);
         tmp.position(0);
         tmp.asIntBuffer().get(buffer);
+        MemoryUtil.memFree(tmp);
+    }
+
+    public static void glReadPixels(int x, int y, int w, int h, int format, int type, float[] buffer) {
+        // could be optimized to use a static temporary buffer
+        ByteBuffer tmp = ByteBuffer.allocateDirect(buffer.length * 4);
+        tmp.order(ByteOrder.nativeOrder());
+        GLES11.glReadPixels(x, y, w, h, format, type, tmp);
+        tmp.position(0);
+        tmp.asFloatBuffer().get(buffer);
         MemoryUtil.memFree(tmp);
     }
 

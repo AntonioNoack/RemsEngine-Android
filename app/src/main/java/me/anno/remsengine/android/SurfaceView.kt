@@ -21,7 +21,7 @@ class SurfaceView(private val ctx: MainActivity) : GLSurfaceView(ctx) {
             MainActivity.lastMouseY = y
             StudioBase.addEvent {
                 Touch.onTouchMove(pid, x, y)
-                if (isMouse) Input.onMouseMove(ctx.windowX, x, y)
+                if (isMouse) Input.onMouseMove(ctx.osWindow, x, y)
             }
             // only if there is a single pointer?
         }
@@ -29,12 +29,12 @@ class SurfaceView(private val ctx: MainActivity) : GLSurfaceView(ctx) {
             MotionEvent.ACTION_DOWN,
             MotionEvent.ACTION_POINTER_DOWN -> StudioBase.addEvent {
                 Touch.onTouchDown(pid, x, y)
-                if (isMouse) Input.onMousePress(ctx.windowX, Key.BUTTON_LEFT)
+                if (isMouse) Input.onMousePress(ctx.osWindow, Key.BUTTON_LEFT)
             }
             MotionEvent.ACTION_UP,
             MotionEvent.ACTION_POINTER_UP -> StudioBase.addEvent {
                 Touch.onTouchUp(pid, x, y)
-                if (isMouse) Input.onMouseRelease(ctx.windowX, Key.BUTTON_LEFT)
+                if (isMouse) Input.onMouseRelease(ctx.osWindow, Key.BUTTON_LEFT)
                 // update mouse position, when the gesture is finished (no more touches down)?
             }
         }

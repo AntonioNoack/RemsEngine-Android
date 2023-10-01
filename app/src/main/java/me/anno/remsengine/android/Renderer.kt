@@ -3,7 +3,7 @@ package me.anno.remsengine.android
 import android.opengl.GLES20
 import android.opengl.GLES30.GL_MAX_SAMPLES
 import android.opengl.GLSurfaceView
-import me.anno.Engine
+import me.anno.Time
 import me.anno.config.DefaultConfig
 import me.anno.config.DefaultStyle
 import me.anno.gpu.*
@@ -86,7 +86,7 @@ class Renderer : GLSurfaceView.Renderer {
                     GFXBase.setStatic("capabilities", GL.getCapabilities())
                     GFX.maxSamples = max(1, GL11C.glGetInteger(GL_MAX_SAMPLES))
                     // my emulator says 4, but only supports OpenGL ES 3.0...
-                    if (version10x < 31) GFX.maxSamples = 1
+                    // if (version10x < 31) GFX.maxSamples = 1
                     drawLogo(windowX.width, windowX.height, false)
                 }
                 in 1 until numLogoFrames -> {
@@ -106,7 +106,7 @@ class Renderer : GLSurfaceView.Renderer {
                 }
                 else -> {
                     GFXBase.updateWindows()
-                    Engine.updateTime()
+                    Time.updateTime()
                     Input.pollControllers(windowX)
                     GFX.activeWindow = windowX
                     GFX.renderStep(windowX)
