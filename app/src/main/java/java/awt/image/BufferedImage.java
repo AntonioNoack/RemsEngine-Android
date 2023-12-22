@@ -6,7 +6,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 
 @SuppressWarnings("unused")
-public class BufferedImage {
+public class BufferedImage implements RenderedImage {
 
     public final int width, height, type;
     private final Graphics2D graphics = new Graphics2D(this);

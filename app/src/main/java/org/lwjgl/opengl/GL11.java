@@ -37,6 +37,7 @@ import android.os.Build;
 
 import org.lwjgl.system.MemoryUtil;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -236,6 +237,22 @@ public class GL11 {
     }
 
     public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, ByteBuffer buffer) {
+        glTexImage2D(target, level, internalFormat, width, height, border, format, type, (Buffer) buffer);
+    }
+
+    public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, ShortBuffer buffer) {
+        glTexImage2D(target, level, internalFormat, width, height, border, format, type, (Buffer) buffer);
+    }
+
+    public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, IntBuffer buffer) {
+        glTexImage2D(target, level, internalFormat, width, height, border, format, type, (Buffer) buffer);
+    }
+
+    public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, FloatBuffer buffer) {
+        glTexImage2D(target, level, internalFormat, width, height, border, format, type, (Buffer) buffer);
+    }
+
+    private static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, Buffer buffer) {
 
         if (print)
             System.out.println("glTexImage2D(" + getTextureTarget(target) + ", level " + level +
@@ -269,6 +286,7 @@ public class GL11 {
             check();
         }
     }
+
 
     public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, long dataPointer) {
 

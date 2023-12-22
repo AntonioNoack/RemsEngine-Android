@@ -110,7 +110,7 @@ public class Graphics {
         ensureFields();
         setFont(getFont());// ensure it has been initialized
         transforms.getTranslation(translation);
-        canvas.drawText(text, x + translation.getX(), y + translation.getY(), paint);
+        canvas.drawText(text, x + translation.x, y + translation.y, paint);
     }
 
     public void dispose() {

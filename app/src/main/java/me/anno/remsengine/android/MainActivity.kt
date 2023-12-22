@@ -26,8 +26,8 @@ import me.anno.input.Key
 import me.anno.io.files.thumbs.Thumbs
 import me.anno.io.files.thumbs.ThumbsExt
 import me.anno.remsengine.android.KeyMap.keyCodeMapping
+import me.anno.studio.Events.addEvent
 import me.anno.studio.StudioBase
-import me.anno.studio.StudioBase.Companion.addEvent
 import me.anno.tests.game.Snake
 import me.anno.ui.Panel
 import me.anno.ui.debug.TestStudio
@@ -105,7 +105,8 @@ class MainActivity : AppCompatActivity(),
                         )
                         ThumbsExt.bindShader(shader, cameraMatrix, Thumbs.matModelMatrix)
                         sky.material.bind(shader)
-                        sky.draw(shader, 0)
+                        // good enough?
+                        sky.getMesh().draw(shader, 0)
                     }
                 }
             }.apply { weight = 1f }

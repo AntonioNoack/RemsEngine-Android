@@ -12,7 +12,7 @@ import me.anno.gpu.Logo.logoBackgroundColor
 import me.anno.gpu.drawing.DrawRectangles
 import me.anno.input.Input
 import me.anno.remsengine.android.MainActivity.Companion.setStatic
-import me.anno.studio.StudioBase
+import me.anno.studio.Events.addEvent
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.*
@@ -49,7 +49,7 @@ class Renderer : GLSurfaceView.Renderer {
         if (width != window.width || height != window.height) {
             window.width = width
             window.height = height
-            StudioBase.addEvent {
+            addEvent {
                 window.framesSinceLastInteraction = 0
             }
         }
@@ -109,7 +109,7 @@ class Renderer : GLSurfaceView.Renderer {
                     Time.updateTime()
                     Input.pollControllers(windowX)
                     GFX.activeWindow = windowX
-                    GFX.renderStep(windowX)
+                    GFX.renderStep(windowX, true)
                     // draw the cursor for debug purposes
                     DrawRectangles.drawRect(
                         windowX.mouseX.toInt(),
