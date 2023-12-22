@@ -2,6 +2,7 @@ package org.lwjgl.opengl;
 
 import static android.opengl.GLES10.GL_ALPHA_TEST;
 import static android.opengl.GLES10.GL_CLAMP_TO_EDGE;
+import static android.opengl.GLES10.GL_LINE_SMOOTH;
 import static android.opengl.GLES10.GL_LUMINANCE;
 import static android.opengl.GLES10.GL_MULTISAMPLE;
 import static android.opengl.GLES10.GL_PACK_ALIGNMENT;
@@ -50,10 +51,9 @@ import me.anno.gpu.GFX;
 import me.anno.gpu.texture.Texture2D;
 import me.anno.utils.Warning;
 
-@SuppressWarnings({"unused", "RedundantCast"})
+@SuppressWarnings({"unused"})
 public class GL11 {
 
-    // todo find the cause for the segfault
     private static final boolean disableDrawing = false;
     private static final boolean disableBuffers = false;
     private static final boolean disableTextures = false;
@@ -152,19 +152,35 @@ public class GL11 {
         check();
     }
 
+    private static final int GL_TEXTURE_CUBE_MAP_SEAMLESS = 0x884f;
+
+    private static boolean isValidFlag(int flags) {
+        switch (flags) {
+            // why ever, these are no flags in OpenGL ES
+            case GL_ALPHA_TEST:
+            case GL_MULTISAMPLE:
+            case GL_TEXTURE_CUBE_MAP_SEAMLESS:
+            case GL_LINE_SMOOTH:
+                return false;
+            default:
+                return true;
+        }
+    }
+
     public static void glEnable(int flags) {
-        if (flags == GL_ALPHA_TEST || flags == GL_MULTISAMPLE) return;
-        check();
-        GLES11.glEnable(flags);
-        check();
+        if (isValidFlag(flags)) {
+            check();
+            GLES11.glEnable(flags);
+            check();
+        }
     }
 
     public static void glDisable(int flags) {
-        // why ever, these are no flags in OpenGL ES
-        if (flags == GL_ALPHA_TEST || flags == GL_MULTISAMPLE) return;
-        check();
-        GLES11.glDisable(flags);
-        check(flags);
+        if (isValidFlag(flags)) {
+            check();
+            GLES11.glDisable(flags);
+            check(flags);
+        }
     }
 
     public static void glCullFace(int face) {
@@ -506,13 +522,18 @@ public class GL11 {
         }
     }
 
+    private static boolean warnedClampToBorder = false;
+
     public static void glTexParameteri(int target, int key, int value) {
         check();
         if (print) System.out.println("glTexParameteri(" + getTextureTarget(target) + ", " +
                 getTexKey(key) + ", " + getTexValue(value) + ")");
         if (value == GLES32.GL_CLAMP_TO_BORDER && (major < 3 || minor < 2)) {
             value = GL_CLAMP_TO_EDGE;
-            System.err.println("ClampToBorder is not supported until OpenGL ES 3.2");
+            if (!warnedClampToBorder) {
+                warnedClampToBorder = true;
+                System.err.println("ClampToBorder is not supported until OpenGL ES 3.2");
+            }
         }
         if (key == GL_GENERATE_MIPMAP) {
             // only supported in OpenGL ES 1.1, not 2.0+???
@@ -603,8 +624,10 @@ public class GL11 {
             int x1, int y1, int w1, int h1,
             int bits, int flags) {
         check();
-        if (!disableFramebuffers)
+        if (!disableFramebuffers) {
+            // todo android emulator is broken: cannot copy multisample depth
             GLES30.glBlitFramebuffer(x0, y0, w0, h0, x1, y1, w1, h1, bits, flags);
+        }
         check();
     }
 
@@ -754,6 +777,9 @@ public class GL11 {
                 .replace("#version 410 es", glslVersionString)
                 .replace("#version 420 es", glslVersionString)
                 .replace("attribute ", "in "); // mmh, changed like this in OpenGL ES
+        if (version10x < 32 && !hasExtension("GL_OES_sample_variables")) {
+            str = str.replace("gl_SampleID", "0");
+        }
         GLES20.glShaderSource(shader, str);
         String log = glGetShaderInfoLog(shader);
         if (log != null && !log.trim().isEmpty()) {
