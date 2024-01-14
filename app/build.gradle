@@ -5,12 +5,12 @@ plugins {
 
 android {
 
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "me.anno.remsengine"
         minSdkVersion 18
-        targetSdk 33
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
@@ -64,7 +64,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-reflect"
     implementation "org.jetbrains.kotlin:kotlin-test"
     implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'com.google.android.material:material:1.11.0'
     //noinspection GradlePath
     implementation files('../../RemsEngine/out/artifacts/Android/RemsEngine.jar')
     //noinspection GradlePath

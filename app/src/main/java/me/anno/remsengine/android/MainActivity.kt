@@ -28,7 +28,6 @@ import me.anno.io.files.thumbs.ThumbsExt
 import me.anno.remsengine.android.KeyMap.keyCodeMapping
 import me.anno.engine.Events.addEvent
 import me.anno.engine.EngineBase
-import me.anno.gpu.GFXBase
 import me.anno.tests.game.Snake
 import me.anno.ui.Panel
 import me.anno.ui.debug.TestEngine
@@ -37,6 +36,8 @@ import me.anno.utils.OS
 import org.apache.logging.log4j.LogManager
 import org.joml.Matrix4f
 import org.lwjgl.opengl.GL11
+
+// todo open keyboard when in text input
 
 // todo we need depth texture support
 //  -> check if we have fp16/32 texture support
@@ -178,7 +179,7 @@ class MainActivity : AppCompatActivity(),
     }
 
     override fun onFling(
-        e1: MotionEvent,
+        e1: MotionEvent?,
         e2: MotionEvent,
         velocityX: Float,
         velocityY: Float
@@ -206,7 +207,7 @@ class MainActivity : AppCompatActivity(),
     }
 
     override fun onScroll(
-        e1: MotionEvent,
+        e1: MotionEvent?,
         e2: MotionEvent,
         distanceX: Float,
         distanceY: Float
