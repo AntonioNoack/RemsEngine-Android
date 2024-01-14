@@ -9,8 +9,9 @@ Good:
  - text working, basic AWT replaced
 
 Bad:
- - random 70px cursor offset
- - crashes sometimes ^^
+ - sky is missing currently :/
+ - some icons (emojis) are just white boxes
+ - may be unstable
 
 ## Notes
 There is no assimp support, because we don't need it. This is a game export,

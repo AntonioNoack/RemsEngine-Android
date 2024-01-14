@@ -12,7 +12,7 @@ import me.anno.gpu.Logo.logoBackgroundColor
 import me.anno.gpu.drawing.DrawRectangles
 import me.anno.input.Input
 import me.anno.remsengine.android.MainActivity.Companion.setStatic
-import me.anno.studio.Events.addEvent
+import me.anno.engine.Events.addEvent
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.*

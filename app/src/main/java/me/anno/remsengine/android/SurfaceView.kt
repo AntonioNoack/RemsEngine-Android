@@ -6,7 +6,7 @@ import android.view.MotionEvent
 import me.anno.input.Input
 import me.anno.input.Key
 import me.anno.input.Touch
-import me.anno.studio.Events.addEvent
+import me.anno.engine.Events.addEvent
 
 @SuppressLint("ViewConstructor")
 class SurfaceView(private val ctx: MainActivity) : GLSurfaceView(ctx) {

@@ -62,6 +62,7 @@ dependencies {
     // versions below don't matter that much (probably)
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation "org.jetbrains.kotlin:kotlin-reflect"
+    implementation "org.jetbrains.kotlin:kotlin-test"
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
     //noinspection GradlePath

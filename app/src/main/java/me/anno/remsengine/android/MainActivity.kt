@@ -26,11 +26,12 @@ import me.anno.input.Key
 import me.anno.io.files.thumbs.Thumbs
 import me.anno.io.files.thumbs.ThumbsExt
 import me.anno.remsengine.android.KeyMap.keyCodeMapping
-import me.anno.studio.Events.addEvent
-import me.anno.studio.StudioBase
+import me.anno.engine.Events.addEvent
+import me.anno.engine.EngineBase
+import me.anno.gpu.GFXBase
 import me.anno.tests.game.Snake
 import me.anno.ui.Panel
-import me.anno.ui.debug.TestStudio
+import me.anno.ui.debug.TestEngine
 import me.anno.utils.Logging
 import me.anno.utils.OS
 import org.apache.logging.log4j.LogManager
@@ -50,7 +51,7 @@ class MainActivity : AppCompatActivity(),
 
     private var glSurfaceView: GLSurfaceView? = null
 
-    private var engine: StudioBase? = null
+    private var engine: EngineBase? = null
 
     val osWindow = OSWindow("")
 
@@ -84,7 +85,7 @@ class MainActivity : AppCompatActivity(),
         LOGGER.info("s2: $src2, ${src2.exists}, ${src2.mkdirs()}")
 
         this.engine = RemsEngine()
-        val engine = this.engine ?: TestStudio("Android") {
+        val engine = this.engine ?: TestEngine("Android") {
             val skyPanel = object : Panel(style) {
                 val sky = Skybox()
                 val cameraMatrix = Matrix4f()
@@ -114,7 +115,7 @@ class MainActivity : AppCompatActivity(),
             listOf(skyPanel)
         }
 
-        StudioBase.instance = engine
+        EngineBase.instance = engine
         engine.setupNames()
         engine.tick("run")
         Logging.setup()
@@ -238,6 +239,7 @@ class MainActivity : AppCompatActivity(),
 
     override fun onResume() {
         super.onResume()
+        GFX.glThread = Thread.currentThread()
         Renderer.newSession1()
         glSurfaceView?.onResume()
         LOGGER.info("Resumed")
