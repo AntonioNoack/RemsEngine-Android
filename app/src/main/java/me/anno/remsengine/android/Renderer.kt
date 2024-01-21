@@ -45,7 +45,7 @@ class Renderer : GLSurfaceView.Renderer {
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
-        val window = GFX.someWindow!!
+        val window = GFX.someWindow
         if (width != window.width || height != window.height) {
             window.width = width
             window.height = height
@@ -73,7 +73,7 @@ class Renderer : GLSurfaceView.Renderer {
             logoBackgroundColor = 0xff99aaff.toInt()
             GFX.glThread = Thread.currentThread()
             invalidateOpenGLES()
-            val windowX = GFX.someWindow!!
+            val windowX = GFX.someWindow
             GFX.activeWindow = windowX
             GFX.check()
 

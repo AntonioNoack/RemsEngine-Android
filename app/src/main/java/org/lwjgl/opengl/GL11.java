@@ -453,6 +453,7 @@ public class GL11 {
         }
 
         check();
+
         ByteBuffer buffer0 = Texture2D.bufferPool.get(data.length * 4, false, false);
         IntBuffer buffer = buffer0.asIntBuffer();
         if (needsCompress) {

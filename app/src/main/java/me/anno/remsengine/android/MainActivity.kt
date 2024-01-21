@@ -23,12 +23,10 @@ import me.anno.gpu.debug.DebugGPUStorage
 import me.anno.gpu.drawing.Perspective
 import me.anno.input.Input
 import me.anno.input.Key
-import me.anno.io.files.thumbs.Thumbs
 import me.anno.io.files.thumbs.ThumbsExt
 import me.anno.remsengine.android.KeyMap.keyCodeMapping
 import me.anno.engine.Events.addEvent
 import me.anno.engine.EngineBase
-import me.anno.tests.game.Snake
 import me.anno.ui.Panel
 import me.anno.ui.debug.TestEngine
 import me.anno.utils.Logging
@@ -38,6 +36,8 @@ import org.joml.Matrix4f
 import org.lwjgl.opengl.GL11
 
 // todo open keyboard when in text input
+
+// todo bug: when reloading everything, Texture2DArray (for chars) somehow isn't reset properly...
 
 // todo we need depth texture support
 //  -> check if we have fp16/32 texture support
@@ -76,6 +76,8 @@ class MainActivity : AppCompatActivity(),
         OS.isWindows = false
         OS.isLinux = false
 
+        AndroidPlugin.onEnable()
+
         val src0 = OS.documents
         val src1 = src0.getChild("RemsEngine")
         val src2 = src1.getChild("SampleProject")
@@ -91,6 +93,7 @@ class MainActivity : AppCompatActivity(),
                 val sky = Skybox()
                 val cameraMatrix = Matrix4f()
                 var first = true
+                val matModelMatrix = ThumbsExt.createModelMatrix().scale(0.62f)
                 override val canDrawOverBorders get() = true
                 override fun onDraw(x0: Int, y0: Int, x1: Int, y1: Int) {
                     useFrame(previewRenderer) {
@@ -105,14 +108,14 @@ class MainActivity : AppCompatActivity(),
                             (x1 - x0) * 1f / (y1 - y0),
                             0.001f, 10f, 0f, 0f
                         )
-                        ThumbsExt.bindShader(shader, cameraMatrix, Thumbs.matModelMatrix)
+                        ThumbsExt.bindShader(shader, cameraMatrix, matModelMatrix)
                         sky.material.bind(shader)
                         // good enough?
                         sky.getMesh().draw(shader, 0)
                     }
                 }
             }.apply { weight = 1f }
-            val snakePanel = Snake().apply { weight = 1f }
+            // val snakePanel = Snake().apply { weight = 1f }
             listOf(skyPanel)
         }
 
