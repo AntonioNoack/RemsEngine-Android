@@ -6,16 +6,20 @@ import android.opengl.GLSurfaceView
 import me.anno.Time
 import me.anno.config.DefaultConfig
 import me.anno.config.DefaultStyle
-import me.anno.gpu.*
+import me.anno.engine.Events.addEvent
+import me.anno.gpu.GFX
+import me.anno.gpu.GFXBase
+import me.anno.gpu.GFXState
 import me.anno.gpu.Logo.drawLogo
 import me.anno.gpu.Logo.logoBackgroundColor
 import me.anno.gpu.drawing.DrawRectangles
 import me.anno.input.Input
 import me.anno.remsengine.android.MainActivity.Companion.setStatic
-import me.anno.engine.Events.addEvent
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.opengl.GL
-import org.lwjgl.opengl.GL11.*
+import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL11.hasExtension
+import org.lwjgl.opengl.GL11.testShaderVersions
 import org.lwjgl.opengl.GL11C
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
@@ -28,7 +32,7 @@ class Renderer : GLSurfaceView.Renderer {
     companion object {
         fun newSession1() {
             GFXState.newSession()
-            invalidateBinding()
+            GL11.invalidateBinding()
         }
     }
 

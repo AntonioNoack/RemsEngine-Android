@@ -10,30 +10,31 @@ import android.os.Bundle
 import android.view.GestureDetector
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GestureDetectorCompat
-import me.anno.config.DefaultConfig.style
-import me.anno.ecs.components.shaders.Skybox
-import me.anno.engine.RemsEngine
-import me.anno.engine.ui.render.Renderers.previewRenderer
+import me.anno.Time
+import me.anno.ecs.Component
+import me.anno.ecs.Entity
+import me.anno.ecs.annotations.DebugAction
+import me.anno.ecs.components.mesh.MeshComponent
+import me.anno.engine.EngineBase
+import me.anno.engine.Events.addEvent
+import me.anno.engine.ui.control.DraggingControls
+import me.anno.engine.ui.render.RenderView
+import me.anno.engine.ui.render.SceneView.Companion.testScene
 import me.anno.gpu.GFX
-import me.anno.gpu.GFXState.useFrame
 import me.anno.gpu.OSWindow
-import me.anno.gpu.debug.DebugGPUStorage
-import me.anno.gpu.drawing.Perspective
 import me.anno.input.Input
 import me.anno.input.Key
-import me.anno.io.files.thumbs.ThumbsExt
+import me.anno.mesh.Shapes.flatCube
 import me.anno.remsengine.android.KeyMap.keyCodeMapping
-import me.anno.engine.Events.addEvent
-import me.anno.engine.EngineBase
-import me.anno.ui.Panel
 import me.anno.ui.debug.TestEngine
 import me.anno.utils.Logging
 import me.anno.utils.OS
 import org.apache.logging.log4j.LogManager
-import org.joml.Matrix4f
 import org.lwjgl.opengl.GL11
+
 
 // todo open keyboard when in text input
 
@@ -87,37 +88,30 @@ class MainActivity : AppCompatActivity(),
         LOGGER.info("s1: $src1, ${src1.exists}, ${src1.mkdirs()}")
         LOGGER.info("s2: $src2, ${src2.exists}, ${src2.mkdirs()}")
 
-        this.engine = RemsEngine()
-        val engine = this.engine ?: TestEngine("Android") {
-            val skyPanel = object : Panel(style) {
-                val sky = Skybox()
-                val cameraMatrix = Matrix4f()
-                var first = true
-                val matModelMatrix = ThumbsExt.createModelMatrix().scale(0.62f)
-                override val canDrawOverBorders get() = true
-                override fun onDraw(x0: Int, y0: Int, x1: Int, y1: Int) {
-                    useFrame(previewRenderer) {
-                        sky.nadirSharpness = 10f
-                        val shader = sky.shader!!.value
-                        shader.use()
-                        if (first) shader.printCode()
-                        first = false
-                        Perspective.setPerspective(
-                            cameraMatrix,
-                            0.7f,
-                            (x1 - x0) * 1f / (y1 - y0),
-                            0.001f, 10f, 0f, 0f
-                        )
-                        ThumbsExt.bindShader(shader, cameraMatrix, matModelMatrix)
-                        sky.material.bind(shader)
-                        // good enough?
-                        sky.getMesh().draw(shader, 0)
-                    }
-                }
-            }.apply { weight = 1f }
-            // val snakePanel = Snake().apply { weight = 1f }
-            listOf(skyPanel)
+        val scene = Entity()
+        scene.add(MeshComponent(flatCube.front))
+        scene.add(object : Component() {
+            @DebugAction
+            fun resetView() {
+                val instance = RenderView.currentInstance!!
+                val controls = instance.controlScheme as DraggingControls
+                controls.resetCamera()
+            }
+
+            @DebugAction
+            fun openKeyboard() {
+                // todo find a way to ask the user for text input
+                val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.showSoftInput(glSurfaceView, InputMethodManager.SHOW_FORCED)
+            }
+        })
+
+        val engine = TestEngine("Rem's Engine") {
+            val p = testScene(scene)
+            p.fill(1f)
+            listOf(p)
         }
+        this.engine = engine
 
         EngineBase.instance = engine
         engine.setupNames()
@@ -205,7 +199,7 @@ class MainActivity : AppCompatActivity(),
 
     override fun onDoubleTap(e: MotionEvent): Boolean {
         // double click, but we have implemented that ourselves anyways
-        addEvent { DebugGPUStorage.openMenu() }
+        // addEvent { DebugGPUStorage.openMenu() }
         return false
     }
 
@@ -223,7 +217,8 @@ class MainActivity : AppCompatActivity(),
         println("Key-down: $keyCode -> ${keyCodeMapping[keyCode]}")
         val key = keyCodeMapping[keyCode]
         if (key != null) {
-            addEvent { Input.onKeyPressed(osWindow, key) }
+            val time = Time.nanoTime
+            addEvent { Input.onKeyPressed(osWindow, key, time) }
         }
         return true
     }

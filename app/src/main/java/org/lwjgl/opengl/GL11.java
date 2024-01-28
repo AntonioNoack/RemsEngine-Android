@@ -664,15 +664,16 @@ public class GL11 {
             supportsDrawBuffers = major >= 3 && hasExtension("GL_EXT_draw_buffers") ? 1 : 0;
         }
         if (supportsDrawBuffers == 0) {
-            if (buffers.length != 1 || buffers[0] != GL_COLOR_ATTACHMENT0)
-                System.err.println("Setting glDrawBuffer to " + Arrays.toString(buffers) + " is not supported!");
-            return;
+            if (buffers.length != 1 || buffers[0] != GL_COLOR_ATTACHMENT0) {
+                // System.err.println("Setting glDrawBuffer to " + Arrays.toString(buffers) + " is not supported!");
+            }
+        } else {
+            if (buffers.length > maxDrawBuffers)
+                throw new IllegalArgumentException("buffers.length > " + maxDrawBuffers);
+            if (print) System.out.println("glDrawBuffers(" + Arrays.toString(buffers) + ")");
+            if (!disableDrawing) GLES30.glDrawBuffers(buffers.length, buffers, 0);
+            check();
         }
-        if (buffers.length > maxDrawBuffers)
-            throw new IllegalArgumentException("buffers.length > " + maxDrawBuffers);
-        if (print) System.out.println("glDrawBuffers(" + Arrays.toString(buffers) + ")");
-        if (!disableDrawing) GLES30.glDrawBuffers(buffers.length, buffers, 0);
-        check();
     }
 
     public static void glReadBuffer(int buffer) {
@@ -863,6 +864,13 @@ public class GL11 {
         check();
         GLES20.glUniform1fv(uniform, x.length, x, 0);
         if (print) System.out.println("glUniform1fv(" + uniform + ", " + Arrays.toString(x) + ")");
+        check();
+    }
+
+    public static void glUniform1fv(int uniform, FloatBuffer x) {
+        check();
+        GLES20.glUniform1fv(uniform, x.remaining(), x);
+        if (print) System.out.println("glUniform1fv(" + uniform + ", " + x + ")");
         check();
     }
 
