@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
@@ -12,6 +13,9 @@
     </option>
   </component>
   <component name="EntryPointsManager">
+    <list size="1">
+      <item index="0" class="java.lang.String" itemvalue="me.anno.ecs.annotations.DebugAction" />
+    </list>
     <pattern value="org.lwjgl.opengl.GL15" />
     <pattern value="org.lwjgl.opengl.GL30C" />
   </component>
