@@ -35,15 +35,8 @@ import me.anno.utils.OS
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.opengl.GL11
 
-
 // todo open keyboard when in text input
-
 // todo bug: when reloading everything, Texture2DArray (for chars) somehow isn't reset properly...
-
-// todo we need depth texture support
-//  -> check if we have fp16/32 texture support
-//  -> add a deferred layer for that, and link it in the corresponding framebuffers
-//  -> fill it in the shader properly: gl_FragCoord.z probably
 
 class MainActivity : AppCompatActivity(),
     GestureDetector.OnGestureListener,
@@ -97,13 +90,6 @@ class MainActivity : AppCompatActivity(),
                 val controls = instance.controlScheme as DraggingControls
                 controls.resetCamera()
             }
-
-            @DebugAction
-            fun openKeyboard() {
-                // todo find a way to ask the user for text input
-                val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                imm.showSoftInput(glSurfaceView, InputMethodManager.SHOW_FORCED)
-            }
         })
 
         val engine = TestEngine("Rem's Engine") {
@@ -114,6 +100,7 @@ class MainActivity : AppCompatActivity(),
         this.engine = engine
 
         EngineBase.instance = engine
+        EngineBase.showFPS = true
         engine.setupNames()
         engine.tick("run")
         Logging.setup()

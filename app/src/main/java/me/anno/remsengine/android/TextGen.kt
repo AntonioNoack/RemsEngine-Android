@@ -19,13 +19,13 @@ import me.anno.gpu.texture.Texture2D
 import me.anno.gpu.texture.Texture2DArray
 import me.anno.maths.Maths
 import me.anno.remsengine.android.AndroidPlugin.getPaint
-import me.anno.utils.strings.StringHelper.shorten
 import me.anno.utils.types.Strings.isBlank2
+import me.anno.utils.types.Strings.shorten
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-class TextGen(val key: FontKey) : TextGenerator {
+class TextGen(key: FontKey) : TextGenerator {
 
     val font = Font(key.name, FontManager.getAvgFontSize(key.sizeIndex), key.bold, key.italic)
     val height = FontStats.getFontHeight(font).toInt()

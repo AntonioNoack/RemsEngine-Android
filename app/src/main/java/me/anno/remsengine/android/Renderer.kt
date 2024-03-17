@@ -5,7 +5,6 @@ import android.opengl.GLES30.GL_MAX_SAMPLES
 import android.opengl.GLSurfaceView
 import me.anno.Time
 import me.anno.config.DefaultConfig
-import me.anno.config.DefaultStyle
 import me.anno.engine.Events.addEvent
 import me.anno.gpu.GFX
 import me.anno.gpu.GFXBase
@@ -87,8 +86,11 @@ class Renderer : GLSurfaceView.Renderer {
             when (frameIndex++) {
                 0 -> {
                     // GFXBase.prepareForRendering(null)
-                    GFXBase.setStatic("capabilities", GL.getCapabilities())
+                    val cap = GL.getCapabilities()
+                    GFXBase.setStatic("capabilities", cap)
+                    cap.GL_ARB_depth_texture = hasExtension("OES_depth_texture")
                     GFX.maxSamples = max(1, GL11C.glGetInteger(GL_MAX_SAMPLES))
+                    GFX.supportsClipControl = false
                     // my emulator says 4, but only supports OpenGL ES 3.0...
                     // if (version10x < 31) GFX.maxSamples = 1
                     drawLogo(windowX.width, windowX.height, false)
@@ -100,13 +102,8 @@ class Renderer : GLSurfaceView.Renderer {
                     // println("Drawing last logo frame")
                     drawLogo(windowX.width, windowX.height, true)
                     KeyMap.defineKeys()
-                    DefaultStyle.baseTheme["fontSize", "dark"] = 25
-                    DefaultStyle.baseTheme["fontSize", "light"] = 25
-                    DefaultStyle.baseTheme["customList.spacing", "dark"] = 10
-                    DefaultStyle.baseTheme["customList.spacing", "light"] = 10
                     GFX.check()
                     GFXBase.init2(null)
-                    GFX.supportsDepthTextures = hasExtension("OES_depth_texture")
                 }
                 else -> {
                     GFXBase.updateWindows()

@@ -49,7 +49,6 @@ import java.util.HashSet;
 
 import me.anno.gpu.GFX;
 import me.anno.gpu.texture.Texture2D;
-import me.anno.utils.Warning;
 
 @SuppressWarnings({"unused"})
 public class GL11 {
@@ -83,14 +82,12 @@ public class GL11 {
     private static int activeTexture = 0;
     private static int boundFramebuffer, boundProgram;
 
-    public static int major, minor, version10x;
-    public static int glslVersion = 0;
+    private static int version10x;
+    private static int glslVersion = 0;
 
     private static String glslVersionString;
 
     public static void setVersion(int major, int minor) {
-        GL11.major = major;
-        GL11.minor = minor;
         version10x = major * 10 + minor;// 3.1 -> 31
     }
 
@@ -234,9 +231,9 @@ public class GL11 {
     }
 
     public static void glBindBuffer(int target, int pointer) {
-        if (major < 3 && target == GLES30.GL_PIXEL_UNPACK_BUFFER && pointer != 0)
+        if (version10x < 30 && target == GLES30.GL_PIXEL_UNPACK_BUFFER && pointer != 0)
             throw new IllegalArgumentException("PIXEL_UNPACK_BUFFER is not supported by OpenGL ES 2.0");
-        if (major < 3 && target == GLES30.GL_PIXEL_UNPACK_BUFFER) return;
+        if (version10x < 30 && target == GLES30.GL_PIXEL_UNPACK_BUFFER) return;
         check();
         if (print)
             System.out.println("glBindBuffer(" + getBufferTarget(target) + ", " + pointer + ")");
@@ -511,7 +508,7 @@ public class GL11 {
             return;
         }
         if (buffer == null || buffer.remaining() == 0) {
-            glTexImage2D(target, level, internalFormat, width, height, border, format, type, 0L);
+            GLES30.glTexImage3D(target, level, internalFormat, width, height, depth, border, format, type, (ByteBuffer) null);
         } else {
             check();
             if (internalFormat == GL_LUMINANCE) format = internalFormat;// OpenGL ES is stricter
@@ -529,7 +526,7 @@ public class GL11 {
         check();
         if (print) System.out.println("glTexParameteri(" + getTextureTarget(target) + ", " +
                 getTexKey(key) + ", " + getTexValue(value) + ")");
-        if (value == GLES32.GL_CLAMP_TO_BORDER && (major < 3 || minor < 2)) {
+        if (value == GLES32.GL_CLAMP_TO_BORDER && version10x < 32) {
             value = GL_CLAMP_TO_EDGE;
             if (!warnedClampToBorder) {
                 warnedClampToBorder = true;
@@ -558,7 +555,7 @@ public class GL11 {
 
     public static void glTexParameterfv(int target, int key, float[] values) {
         if (key == GLES32.GL_TEXTURE_BORDER_COLOR) {
-            if (major >= 3 && minor >= 2) {
+            if (version10x >= 32) {
                 if (print) System.out.println("glTexParameterfv(" + getTextureTarget(target) +
                         ", " + getTexKey(key) + ", " + Arrays.toString(values) + ")");
                 check();
@@ -635,7 +632,7 @@ public class GL11 {
     public static void glDrawBuffer(int buffer) {
         check();
         if (supportsDrawBuffers < 0) {
-            supportsDrawBuffers = major >= 3 && hasExtension("GL_EXT_draw_buffers") ? 1 : 0;
+            supportsDrawBuffers = version10x >= 30 && hasExtension("GL_EXT_draw_buffers") ? 1 : 0;
             if (supportsDrawBuffers == 1) {
                 GLES30.glGetIntegerv(GLES30.GL_MAX_DRAW_BUFFERS, tmpInt1, 0);
                 maxDrawBuffers = tmpInt1[0];
@@ -661,7 +658,7 @@ public class GL11 {
     public static void glDrawBuffers(int[] buffers) {
         check();
         if (supportsDrawBuffers < 0) {
-            supportsDrawBuffers = major >= 3 && hasExtension("GL_EXT_draw_buffers") ? 1 : 0;
+            supportsDrawBuffers = version10x >= 30 && hasExtension("GL_EXT_draw_buffers") ? 1 : 0;
         }
         if (supportsDrawBuffers == 0) {
             if (buffers.length != 1 || buffers[0] != GL_COLOR_ATTACHMENT0) {
@@ -677,7 +674,7 @@ public class GL11 {
     }
 
     public static void glReadBuffer(int buffer) {
-        if (major >= 3) {
+        if (version10x >= 30) {
             GLES30.glReadBuffer(buffer);
         } else System.err.println("glReadBuffer is not supported!");
     }
@@ -1185,8 +1182,13 @@ public class GL11 {
         check();
     }
 
+    private static boolean hasWarnedClipControl = false;
+
     public static void glClipControl(int origin, int depth) {
-        Warning.warn("Cannot call glClipControl on Android!");
+        if (!hasWarnedClipControl) {
+            hasWarnedClipControl = true;
+            System.err.println("Cannot call glClipControl on Android!");
+        }
     }
 
     public static int glGenRenderbuffers() {
@@ -1206,12 +1208,12 @@ public class GL11 {
     }
 
     public static void glRenderbufferStorageMultisample(int target, int samples, int format, int width, int height) {
-        if (major >= 3) {
+        if (version10x >= 30) {
             if (!disableFramebuffers)
                 GLES30.glRenderbufferStorageMultisample(target, samples, format, width, height);
             if (print) System.out.println("glRenderbufferStorageMultisample(...)");
         } else {
-            System.err.println("glRenderbufferStorageMultisample not supported, v" + major + "." + minor);
+            System.err.println("glRenderbufferStorageMultisample not supported, v" + version10x);
             glRenderbufferStorage(target, format, width, height);
         }
     }
@@ -1323,7 +1325,9 @@ public class GL11 {
     }
 
     public static void glObjectLabel(int type, int id, CharSequence name) {
-        // not supported, debugging only anyway
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && version10x >= 32) {
+            GLES32.glObjectLabel(type, id, name.length(), name.toString());
+        }
     }
 
 }

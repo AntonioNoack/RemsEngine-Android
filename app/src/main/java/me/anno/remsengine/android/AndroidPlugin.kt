@@ -1,5 +1,6 @@
 package me.anno.remsengine.android
 
+import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
 import android.graphics.BitmapFactory
@@ -7,6 +8,7 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.os.Build
+import androidx.core.math.MathUtils.clamp
 import me.anno.extensions.plugins.Plugin
 import me.anno.fonts.Font
 import me.anno.fonts.FontStats
@@ -21,6 +23,7 @@ import me.anno.utils.types.Booleans.toInt
 import org.joml.AABBf
 import java.io.File
 import java.io.OutputStream
+import kotlin.math.max
 
 object AndroidPlugin : Plugin() {
 
@@ -54,6 +57,10 @@ object AndroidPlugin : Plugin() {
 
         Image.writeImageImpl = this::writeImage
 
+        FontStats.getDefaultFontSizeImpl = {
+            val dm = Resources.getSystem().displayMetrics
+            clamp(max(dm.widthPixels, dm.heightPixels) / 70, 15, 60)
+        }
         FontStats.queryInstalledFontsImpl = ::getFonts
         FontStats.getTextGeneratorImpl = { key -> TextGen(key) }
         FontStats.getTextLengthImpl = { font, text ->
