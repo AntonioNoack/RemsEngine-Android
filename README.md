@@ -1,18 +1,15 @@
 # RemsEngine-Android
-This is a try to port Rem's Engine to Android
-
-Since I am using AWT and LWJGL in Rem's Engine, this indirectly also is a partial port of those libraries.
+This is the official port of Rem's Engine to Android, with the focus being to run games.
+So it's ok to only support our custom mesh format, and limited image formats, as the conversion
+can automatically happen during the game export (not yet implemented except for deep-imported meshes).
 
 ## Progress
 Good:
  - UI working
- - text working, basic AWT replaced
+ - text working, including emojis
+ - forward rendering working
+ - mouse-centric UI is usable via touch
 
 Bad:
- - sky is missing currently :/
- - some icons (emojis) are just white boxes
- - may be unstable
-
-## Notes
-There is no assimp support, because we don't need it. This is a game export,
-so we only need to support the file formats that we export. We just always export custom meshes.
+ - sky is missing when using deferred rendering :/
+ - not everything is necessarily tested or supported
