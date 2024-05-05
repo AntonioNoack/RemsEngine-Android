@@ -27,8 +27,9 @@ import kotlin.math.roundToInt
 
 class TextGen(key: FontKey) : TextGenerator {
 
-    val font = Font(key.name, FontManager.getAvgFontSize(key.sizeIndex), key.bold, key.italic)
-    val height = FontStats.getFontHeight(font).toInt()
+    private val font =
+        Font(key.name, FontManager.getAvgFontSize(key.sizeIndex), key.bold, key.italic)
+    private val height = FontStats.getFontHeight(font).toInt()
 
     private fun getStringWidth(group: TextGroup) = group.offsets.last() - group.offsets.first()
     private fun createGroup(font: Font, text: CharSequence): TextGroup = TextGroup(font, text, 0.0)

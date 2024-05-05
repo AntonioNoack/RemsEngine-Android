@@ -21,6 +21,7 @@ import me.anno.io.MediaMetadata
 import me.anno.maths.geometry.MarchingSquares
 import me.anno.utils.types.Booleans.toInt
 import org.joml.AABBf
+import org.joml.Vector2f
 import java.io.File
 import java.io.OutputStream
 import kotlin.math.max
@@ -79,14 +80,19 @@ object AndroidPlugin : Plugin() {
             if (pixels != null) MarchingSquares.march(
                 pixels.w, pixels.h, pixels.values, 127.5f,
                 AABBf(0f, 0f, 0f, (pixels.w - 1).toFloat(), (pixels.h - 1).toFloat(), 0f)
-            ).map { pts ->
-                Contour(pts.indices.map {
-                    val p0 = pts[it]
-                    val p1 = if (it == pts.size - 1) pts[0] else pts[it + 1]
-                    LinearSegment(p0, p1)
-                })
-            } else emptyList()
+            ).map(::createContour) else emptyList()
         }
+    }
+
+    private fun createContour(pts: List<Vector2f>): Contour {
+        val segments = ArrayList<LinearSegment>(pts.size)
+        var prev = pts.last()
+        for (i in pts.indices) {
+            val curr = pts[i]
+            segments.add(LinearSegment(prev, curr))
+            prev = curr
+        }
+        return Contour(segments)
     }
 
     fun getPaint(font: Font): Paint {
@@ -110,22 +116,31 @@ object AndroidPlugin : Plugin() {
             ?: listOf("Droid Sans", "Droid Serif", "Droid Sans Mono", "Roboto")
     }
 
+    private fun chooseFormat(format: String, quality: Float): CompressFormat {
+        return when {
+            "webp".equals(format, true) -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    if (quality == 1f) CompressFormat.WEBP_LOSSLESS
+                    else CompressFormat.WEBP_LOSSY
+                } else CompressFormat.WEBP
+            }
+            "jpg".equals(format, true) || "jpeg".equals(format, true) -> {
+                CompressFormat.JPEG
+            }
+            else -> {
+                if (!"png".equals(format, true)) {
+                    println("$format cannot be properly exported, using PNG")
+                }
+                CompressFormat.PNG
+            }
+        }
+    }
+
     private fun writeImage(img: Image, dst: OutputStream, format: String, quality: Float) {
         val intImage = img.createIntImage()
         val intData = intImage.data
         val bitmap = Bitmap.createBitmap(intData, img.width, img.height, Bitmap.Config.ARGB_8888)
-        var format1 = CompressFormat.PNG
-        if ("webp".equals(format, true)) {
-            format1 = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                if (quality == 1f) CompressFormat.WEBP_LOSSLESS
-                else CompressFormat.WEBP_LOSSY
-            } else CompressFormat.WEBP
-        } else if ("jpg".equals(format, true) || "jpeg".equals(format, true)) {
-            format1 = CompressFormat.JPEG
-        } else if (!"png".equals(format, true)) {
-            println("$format cannot be properly exported, using PNG")
-        }
-        bitmap.compress(format1, (quality * 100).toInt(), dst)
+        bitmap.compress(chooseFormat(format, quality), (quality * 100).toInt(), dst)
         bitmap.recycle()
     }
 }

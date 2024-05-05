@@ -90,7 +90,6 @@ class Renderer : GLSurfaceView.Renderer {
                     GFXBase.setStatic("capabilities", cap)
                     cap.GL_ARB_depth_texture = hasExtension("OES_depth_texture")
                     GFX.maxSamples = max(1, GL11C.glGetInteger(GL_MAX_SAMPLES))
-                    GFX.supportsClipControl = false
                     // my emulator says 4, but only supports OpenGL ES 3.0...
                     // if (version10x < 31) GFX.maxSamples = 1
                     drawLogo(windowX.width, windowX.height, false)
