@@ -69,9 +69,6 @@ dependencies {
     implementation files('../../RemsEngine/out/artifacts/Android/RemsEngine.jar')
     //noinspection GradlePath
     implementation files('../../RemsStudio/out/artifacts/Mod/RemsStudio-clear.jar')
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
     // multiple dexes for more than 65k classes
     implementation 'com.android.support:multidex:1.0.3'

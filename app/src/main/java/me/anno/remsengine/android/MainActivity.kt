@@ -10,24 +10,32 @@ import android.os.Bundle
 import android.view.GestureDetector
 import android.view.KeyEvent
 import android.view.MotionEvent
-import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GestureDetectorCompat
 import me.anno.Time
+import me.anno.config.DefaultConfig.style
 import me.anno.ecs.Component
 import me.anno.ecs.Entity
 import me.anno.ecs.annotations.DebugAction
+import me.anno.ecs.components.light.sky.Skybox
+import me.anno.ecs.components.light.sky.SkyboxBase
 import me.anno.ecs.components.mesh.MeshComponent
+import me.anno.ecs.components.mesh.shapes.IcosahedronModel
 import me.anno.engine.EngineBase
 import me.anno.engine.Events.addEvent
 import me.anno.engine.ui.control.DraggingControls
+import me.anno.engine.ui.render.PlayMode
+import me.anno.engine.ui.render.RenderMode
 import me.anno.engine.ui.render.RenderView
+import me.anno.engine.ui.render.RenderView0
+import me.anno.engine.ui.render.RenderView1
+import me.anno.engine.ui.render.SceneView
 import me.anno.engine.ui.render.SceneView.Companion.testScene
 import me.anno.gpu.GFX
 import me.anno.gpu.OSWindow
 import me.anno.input.Input
 import me.anno.input.Key
-import me.anno.mesh.Shapes.flatCube
+import me.anno.io.saveable.Saveable.Companion.registerCustomClass
 import me.anno.remsengine.android.KeyMap.keyCodeMapping
 import me.anno.ui.debug.TestEngine
 import me.anno.utils.Logging
@@ -48,11 +56,21 @@ class MainActivity : AppCompatActivity(),
 
     private var engine: EngineBase? = null
 
-    val osWindow = OSWindow("")
+    val osWindow = GFX.someWindow
 
     init {
         GFX.windows.clear()
         GFX.windows.add(osWindow)
+    }
+
+    class TestControls : Component() {
+        @DebugAction
+        fun resetView() {
+            val instance = RenderView.currentInstance!!
+            val controls = instance.controlScheme as DraggingControls
+            controls.resetCamera()
+            instance.radius = 3.0
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -81,19 +99,19 @@ class MainActivity : AppCompatActivity(),
         LOGGER.info("s1: $src1, ${src1.exists}, ${src1.mkdirs()}")
         LOGGER.info("s2: $src2, ${src2.exists}, ${src2.mkdirs()}")
 
+        registerCustomClass(TestControls())
+
         val scene = Entity()
-        scene.add(MeshComponent(flatCube.front))
-        scene.add(object : Component() {
-            @DebugAction
-            fun resetView() {
-                val instance = RenderView.currentInstance!!
-                val controls = instance.controlScheme as DraggingControls
-                controls.resetCamera()
-            }
-        })
+        scene.add(Skybox())
+        scene.add(MeshComponent(IcosahedronModel.createIcosphere(4)))
+        scene.add(TestControls())
 
         val engine = TestEngine("Rem's Engine") {
-            val p = testScene(scene)
+            val p = testScene(scene) {
+                it.renderer.renderMode = RenderMode.SIMPLE
+            }
+            //val p = SceneView(RenderView1(PlayMode.EDITING, scene, style), style)
+            //p.renderer.renderMode = RenderMode.SIMPLE
             p.fill(1f)
             listOf(p)
         }

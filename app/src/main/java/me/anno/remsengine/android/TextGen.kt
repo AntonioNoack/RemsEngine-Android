@@ -19,6 +19,7 @@ import me.anno.gpu.texture.Texture2D
 import me.anno.gpu.texture.Texture2DArray
 import me.anno.maths.Maths
 import me.anno.remsengine.android.AndroidPlugin.getPaint
+import me.anno.utils.structures.Callback
 import me.anno.utils.types.Strings.isBlank2
 import me.anno.utils.types.Strings.shorten
 import kotlin.math.max
@@ -34,13 +35,7 @@ class TextGen(key: FontKey) : TextGenerator {
     private fun getStringWidth(group: TextGroup) = group.offsets.last() - group.offsets.first()
     private fun createGroup(font: Font, text: CharSequence): TextGroup = TextGroup(font, text, 0.0)
 
-    override fun calculateSize(
-        text: CharSequence,
-        widthLimit: Int,
-        heightLimit: Int
-    ): Int {
-
-        // todo do we need to handle emojis separately?
+    override fun calculateSize(text: CharSequence, widthLimit: Int, heightLimit: Int): Int {
         val baseWidth = getStringWidth(createGroup(font, text))
         val width = Maths.clamp(baseWidth.roundToInt() + 1, 0, GFX.maxTextureSize)
         val height = min(height, GFX.maxTextureSize)
@@ -48,11 +43,9 @@ class TextGen(key: FontKey) : TextGenerator {
     }
 
     override fun generateASCIITexture(
-        portableImages: Boolean,
-        textColor: Int,
-        backgroundColor: Int,
-        extraPadding: Int
-    ): Texture2DArray {
+        portableImages: Boolean, callback: Callback<Texture2DArray>,
+        textColor: Int, backgroundColor: Int, extraPadding: Int
+    ) {
 
         val widthLimit = GFX.maxTextureSize
         val heightLimit = GFX.maxTextureSize
@@ -68,23 +61,21 @@ class TextGen(key: FontKey) : TextGenerator {
                 texture, portableImages,
                 textColor, backgroundColor, extraPadding
             )
+            callback.ok(texture)
         } else {
             GFX.addGPUTask("awtAtlas", width, height) {
                 createASCIITexture(
                     texture, portableImages,
                     textColor, backgroundColor, extraPadding
                 )
+                callback.ok(texture)
             }
         }
-
-        return texture
     }
 
     private fun createASCIITexture(
-        texture: Texture2DArray,
-        portableImages: Boolean,
-        textColor: Int,
-        backgroundColor: Int,
+        texture: Texture2DArray, portableImages: Boolean,
+        textColor: Int, backgroundColor: Int,
         extraPadding: Int
     ) {
         val bitmap = Bitmap.createBitmap(
@@ -99,6 +90,7 @@ class TextGen(key: FontKey) : TextGenerator {
         canvas.drawRect(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat(), paint)
         paint.color = textColor
         paint.textAlign = Paint.Align.CENTER
+        paint.isSubpixelText = !portableImages
         var y = extraPadding + paint.textSize
         val x = texture.width * 0.5f
         val dy = texture.height.toFloat()
@@ -122,10 +114,11 @@ class TextGen(key: FontKey) : TextGenerator {
         widthLimit: Int,
         heightLimit: Int,
         portableImages: Boolean,
+        callback: Callback<ITexture2D>,
         textColor: Int,
         backgroundColor: Int,
         extraPadding: Int
-    ): ITexture2D? {
+    ) {
 
         val group = createGroup(font, text)
         val width = min(widthLimit, getStringWidth(group).roundToInt() + 1 + 2 * extraPadding)
@@ -134,15 +127,16 @@ class TextGen(key: FontKey) : TextGenerator {
         val fontHeight = height
         val height = min(heightLimit, fontHeight * lineCount + 2 * extraPadding)
 
-        if (width < 1 || height < 1) return null
+        if (width < 1 || height < 1) return callback.err(null)
         if (max(width, height) > GFX.maxTextureSize) {
-            IllegalArgumentException(
-                "Texture for text is too large! $width x $height > ${GFX.maxTextureSize}, " +
-                        "${text.length} chars, $lineCount lines, ${font.name} ${font.size} px, ${
-                            text.toString().shorten(200)
-                        }"
-            ).printStackTrace()
-            return null
+            return callback.err(
+                IllegalArgumentException(
+                    "Texture for text is too large! $width x $height > ${GFX.maxTextureSize}, " +
+                            "${text.length} chars, $lineCount lines, ${font.name} ${font.size} px, ${
+                                text.toString().shorten(200)
+                            }"
+                )
+            )
         }
 
         if (text.isBlank2()) {
@@ -150,24 +144,33 @@ class TextGen(key: FontKey) : TextGenerator {
             // and return an empty/blank texture
             // that the correct size is returned is required by text input fields
             // (with whitespace at the start or end)
-            return FakeWhiteTexture(width, height, 1)
+            return callback.ok(FakeWhiteTexture(width, height, 1))
         }
 
         val texture = Texture2D("awt-" + text.shorten(24), width, height, 1)
         val hasPriority = GFX.isGFXThread() && (GFX.loadTexturesSync.peek() || text.length == 1)
         if (hasPriority) {
-            createImage(texture, textColor, backgroundColor, extraPadding, text.toString())
+            createImage(
+                texture, portableImages,
+                textColor, backgroundColor,
+                extraPadding, text.toString()
+            )
+            callback.ok(texture)
         } else {
             GFX.addGPUTask("awt-font-v5", width, height) {
-                createImage(texture, textColor, backgroundColor, extraPadding, text.toString())
+                createImage(
+                    texture, portableImages,
+                    textColor, backgroundColor,
+                    extraPadding, text.toString()
+                )
+                callback.ok(texture)
             }
         }
-
-        return texture
     }
 
     private fun createImage(
-        texture: Texture2D, textColor: Int, backgroundColor: Int,
+        texture: Texture2D, portableImages: Boolean,
+        textColor: Int, backgroundColor: Int,
         extraPadding: Int, text: String
     ) {
         val bitmap = Bitmap.createBitmap(texture.width, texture.height, Bitmap.Config.ARGB_8888)
@@ -181,6 +184,7 @@ class TextGen(key: FontKey) : TextGenerator {
         val paint = getPaint(font)
         paint.color = textColor
         paint.textAlign = Paint.Align.CENTER
+        paint.isSubpixelText = !portableImages
         canvas.drawText(text, texture.width * 0.5f, extraPadding + paint.textSize, paint)
         val pixels = getPixels(bitmap)
         texture.createRGBA(pixels, false)

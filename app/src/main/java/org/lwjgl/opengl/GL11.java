@@ -1,7 +1,11 @@
 package org.lwjgl.opengl;
 
 import static android.opengl.GLES10.GL_ALPHA_TEST;
+import static android.opengl.GLES10.GL_ALWAYS;
 import static android.opengl.GLES10.GL_CLAMP_TO_EDGE;
+import static android.opengl.GLES10.GL_GEQUAL;
+import static android.opengl.GLES10.GL_GREATER;
+import static android.opengl.GLES10.GL_LEQUAL;
 import static android.opengl.GLES10.GL_LINE_SMOOTH;
 import static android.opengl.GLES10.GL_LUMINANCE;
 import static android.opengl.GLES10.GL_MULTISAMPLE;
@@ -15,6 +19,7 @@ import static android.opengl.GLES11Ext.GL_BGRA;
 import static android.opengl.GLES20.GL_COLOR_ATTACHMENT0;
 import static android.opengl.GLES20.GL_DEPTH_COMPONENT;
 import static android.opengl.GLES20.GL_DEPTH_COMPONENT16;
+import static android.opengl.GLES20.GL_LESS;
 import static android.opengl.GLES20.GL_UNSIGNED_INT;
 import static android.opengl.GLES20.GL_VALIDATE_STATUS;
 import static android.opengl.GLES20.GL_VERTEX_SHADER;
@@ -36,6 +41,8 @@ import android.opengl.GLES31;
 import android.opengl.GLES32;
 import android.os.Build;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.LoggerImpl;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.Buffer;
@@ -87,6 +94,8 @@ public class GL11 {
 
     private static String glslVersionString;
 
+    private static final LoggerImpl LOGGER = LogManager.getLogger("GL11");
+
     public static void setVersion(int major, int minor) {
         version10x = major * 10 + minor;// 3.1 -> 31
     }
@@ -96,13 +105,17 @@ public class GL11 {
         activeTexture = 0;
     }
 
+    private static final boolean disableChecks = false;
+
     protected static void check(int mode) {
+        if (disableChecks) return;
         int error = glGetError();
         if (error != 0)
             throw new RuntimeException("OpenGL returned error " + GFX.getErrorTypeName(error) + " for mode " + mode);
     }
 
     protected static void check() {
+        if (disableChecks) return;
         int error = glGetError();
         if (error != 0) {
             System.err.println("OpenGL returned error " + GFX.getErrorTypeName(error));
@@ -117,6 +130,7 @@ public class GL11 {
         int maxVersion = 0;
         for (int version = 100; version < 400; version += 10) {
             int shader = GLES20.glCreateShader(GL_VERTEX_SHADER);
+            //noinspection ConcatenationWithEmptyString
             GLES20.glShaderSource(shader, "" +
                     "#version " + version + " es\n" +
                     "void main(){ gl_Position = vec4(1.0); }");
@@ -128,7 +142,7 @@ public class GL11 {
             GLES20.glDeleteShader(shader);
         }
         // absorb errors
-        for (int errorCtr = 0; errorCtr < 100; errorCtr++) {
+        while (true) {
             if (GLES20.glGetError() == 0) break;
         }
         if (print) System.out.println("Maximum supported GLSL version: " + maxVersion);
@@ -267,11 +281,17 @@ public class GL11 {
 
     private static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, Buffer buffer) {
 
-        if (print)
+        if (print) {
             System.out.println("glTexImage2D(" + getTextureTarget(target) + ", level " + level +
                     ", internal " + getFormat(internalFormat) + ", " + width + " x " + height + ", " + border +
                     ", format " + getFormat(format) + ", " + getType(type) +
                     ", data: " + buffer);
+        }
+
+        if (internalFormat == GLES30.GL_RGBA8 && format == GLES30.GL_RGBA && type == GLES30.GL_UNSIGNED_SHORT) {
+            type = GLES30.GL_UNSIGNED_BYTE;
+            LOGGER.warn("Changed framebuffer format from U16 to U8");
+        }
 
         if (!TextureFormat.isSupported(internalFormat, format, type)) {
             throw new IllegalArgumentException("Unsupported format: " +
@@ -617,29 +637,17 @@ public class GL11 {
         check();
     }
 
-    public static void glBlitFramebuffer(
-            int x0, int y0, int w0, int h0,
-            int x1, int y1, int w1, int h1,
-            int bits, int flags) {
-        check();
-        if (!disableFramebuffers) {
-            // todo android emulator is broken: cannot copy multisample depth
-            GLES30.glBlitFramebuffer(x0, y0, w0, h0, x1, y1, w1, h1, bits, flags);
-        }
-        check();
-    }
-
     public static void glDrawBuffer(int buffer) {
         check();
-        if (supportsDrawBuffers < 0) {
-            supportsDrawBuffers = version10x >= 30 && hasExtension("GL_EXT_draw_buffers") ? 1 : 0;
-            if (supportsDrawBuffers == 1) {
+        if (supportsDrawBuffers == null) {
+            supportsDrawBuffers = version10x >= 30 && hasExtension("GL_EXT_draw_buffers");
+            if (supportsDrawBuffers == Boolean.TRUE) {
                 GLES30.glGetIntegerv(GLES30.GL_MAX_DRAW_BUFFERS, tmpInt1, 0);
                 maxDrawBuffers = tmpInt1[0];
                 System.out.println("MaxDrawBuffers: " + maxDrawBuffers);
             }
         }
-        if (supportsDrawBuffers == 0) {
+        if (supportsDrawBuffers == Boolean.FALSE) {
             if (buffer != GL_COLOR_ATTACHMENT0)
                 System.err.println("Setting glDrawBuffer to " + buffer + " is not supported!");
             return;
@@ -657,12 +665,12 @@ public class GL11 {
 
     public static void glDrawBuffers(int[] buffers) {
         check();
-        if (supportsDrawBuffers < 0) {
-            supportsDrawBuffers = version10x >= 30 && hasExtension("GL_EXT_draw_buffers") ? 1 : 0;
+        if (supportsDrawBuffers == null) {
+            supportsDrawBuffers = version10x >= 30 && hasExtension("GL_EXT_draw_buffers");
         }
-        if (supportsDrawBuffers == 0) {
+        if (supportsDrawBuffers == Boolean.FALSE) {
             if (buffers.length != 1 || buffers[0] != GL_COLOR_ATTACHMENT0) {
-                // System.err.println("Setting glDrawBuffer to " + Arrays.toString(buffers) + " is not supported!");
+                System.err.println("Setting glDrawBuffer to " + Arrays.toString(buffers) + " is not supported!");
             }
         } else {
             if (buffers.length > maxDrawBuffers)
@@ -673,15 +681,8 @@ public class GL11 {
         }
     }
 
-    public static void glReadBuffer(int buffer) {
-        if (version10x >= 30) {
-            GLES30.glReadBuffer(buffer);
-        } else System.err.println("glReadBuffer is not supported!");
-    }
-
     public static void glDrawBuffers(int buffer) {
-        tmpInt1[0] = buffer;
-        glDrawBuffers(tmpInt1);
+        glDrawBuffer(buffer);
     }
 
     private static HashSet<String> extensions;
@@ -696,7 +697,7 @@ public class GL11 {
     }
 
     private static int maxDrawBuffers = 0;
-    private static int supportsDrawBuffers = -1;
+    private static Boolean supportsDrawBuffers = null;
 
 
     public static int glCheckFramebufferStatus(int target) {
@@ -1077,6 +1078,10 @@ public class GL11 {
         return tmpInt1[0];
     }
 
+    public static int glCreateVertexArrays() {
+        return glGenVertexArrays();
+    }
+
     public static void glDeleteVertexArrays(int i) {
         check();
         tmpInt1[0] = i;
@@ -1133,24 +1138,6 @@ public class GL11 {
         // check();
     }
 
-    private static void checkProgramStatus() {
-        // for testing
-        if (print) {
-            check();
-            GLES30.glValidateProgram(boundProgram);
-            GLES30.glGetProgramiv(boundProgram, GL_VALIDATE_STATUS, tmpInt1, 0);
-            int validationStatus = tmpInt1[0];// true = validation success
-            String log = glGetProgramInfoLog(boundProgram);
-            // todo there will be a failure, if a texture is bound to 2 slots, and they use different samplers
-            System.out.println("status: " + (validationStatus == 1 ? "OK" : "INVALID") + ", log: \"" + log + "\"");
-            check();
-        }
-    }
-
-    private static void absorbErrors() {
-        glGetError();
-    }
-
     public static void glDrawElementsInstanced(int mode, int count, int type, long firstInstanceIndex, int instanceCount) {
 
         if (firstInstanceIndex > Integer.MAX_VALUE)
@@ -1170,15 +1157,54 @@ public class GL11 {
 
     }
 
+    private static void checkProgramStatus() {
+        // for testing
+        if (print) {
+            check();
+            GLES30.glValidateProgram(boundProgram);
+            GLES30.glGetProgramiv(boundProgram, GL_VALIDATE_STATUS, tmpInt1, 0);
+            int validationStatus = tmpInt1[0];// true = validation success
+            String log = glGetProgramInfoLog(boundProgram);
+            // todo there will be a failure, if a texture is bound to 2 slots, and they use different samplers
+            System.out.println("status: " + (validationStatus == 1 ? "OK" : "INVALID") + ", log: \"" + log + "\"");
+            check();
+        }
+    }
+
+    private static void absorbErrors() {
+        glGetError();
+    }
+
+    private static String getDepthFunc(int func) {
+        switch (func) {
+            case GL_LESS:
+                return "less";
+            case GL_LEQUAL:
+                return "less-equal";
+            case GL_ALWAYS:
+                return "always";
+            case GL_GREATER:
+                return "greater";
+            case GL_GEQUAL:
+                return "greater-equal";
+            default:
+                return Integer.toString(func);
+        }
+    }
+
     public static void glDepthFunc(int func) {
         check();
         GLES20.glDepthFunc(func);
+        if (print)
+            System.out.println("glDepthFunc(" + getDepthFunc(func) + ")");
         check();
     }
 
     public static void glClearDepth(double depth) {
         check();
         GLES20.glClearDepthf((float) depth);
+        if (print)
+            System.out.println("glClearDepth(" + depth + ")");
         check();
     }
 
@@ -1193,7 +1219,7 @@ public class GL11 {
 
     public static int glGenRenderbuffers() {
         GLES20.glGenRenderbuffers(1, tmpInt1, 0);
-        if (print) System.out.println("glGenRenderbuffer(...)");
+        if (print) System.out.println("glGenRenderbuffer() -> " + tmpInt1[0]);
         return tmpInt1[0];
     }
 
@@ -1204,7 +1230,8 @@ public class GL11 {
 
     public static void glBindRenderbuffer(int target, int renderbuffer) {
         if (!disableFramebuffers) GLES20.glBindRenderbuffer(target, renderbuffer);
-        if (print) System.out.println("glBindRenderbuffer(...)");
+        if (print)
+            System.out.println("glBindRenderbuffer(" + target + ", " + renderbuffer + ")");
     }
 
     public static void glRenderbufferStorageMultisample(int target, int samples, int format, int width, int height) {
@@ -1219,14 +1246,20 @@ public class GL11 {
     }
 
     public static void glRenderbufferStorage(int target, int format, int width, int height) {
+        if (format == GL_DEPTH_COMPONENT) { // not supported on Honor 10
+            format = GL_DEPTH_COMPONENT16;
+            // todo show a warning that we did this
+        }
         if (!disableFramebuffers) GLES20.glRenderbufferStorage(target, format, width, height);
-        if (print) System.out.println("glRenderbufferStorage(...)");
+        if (print)
+            System.out.println("glRenderbufferStorage(" + target + ", " + format + ", " + width + " x " + height + ")");
     }
 
     public static void glFramebufferRenderbuffer(int target, int attachment, int rbTarget, int renderbuffer) {
         if (!disableFramebuffers)
             GLES20.glFramebufferRenderbuffer(target, attachment, rbTarget, renderbuffer);
-        if (print) System.out.println("glFramebufferRenderbuffer(...)");
+        if (print)
+            System.out.println("glFramebufferRenderbuffer(" + target + ", " + attachment + ", " + rbTarget + ", " + renderbuffer + ")");
     }
 
     public static void glDeleteTextures(int[] textures) {
@@ -1328,6 +1361,53 @@ public class GL11 {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && version10x >= 32) {
             GLES32.glObjectLabel(type, id, name.length(), name.toString());
         }
+    }
+
+    public static void glPushDebugGroup(int i, int j, CharSequence name) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && version10x >= 32) {
+            GLES32.glPushDebugGroup(i, j, name.length(), name.toString());
+        }
+    }
+
+    public static void glPopDebugGroup() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && version10x >= 32) {
+            GLES32.glPopDebugGroup();
+        }
+    }
+
+    public static void glGenQueries(int[] ids) {
+        if (version10x >= 30) {
+            GLES30.glGenQueries(ids.length, ids, 0);
+        }
+    }
+
+    public static void glBeginQuery(int target, int query) {
+        if (version10x >= 30) {
+            GLES30.glBeginQuery(target, query);
+        }
+    }
+
+    public static void glEndQuery(int target) {
+        if (version10x >= 30) {
+            GLES30.glEndQuery(target);
+        }
+    }
+
+    public static void glDeleteQueries(int[] ids) {
+        if (version10x >= 30) {
+            GLES30.glDeleteQueries(ids.length, ids, 0);
+        }
+    }
+
+    public static int glGetQueryObjecti(int type, int id) {
+        if (version10x >= 30) {
+            GLES30.glGetQueryObjectuiv(type, id, tmpInt1, 0);
+            return tmpInt1[0];
+        } else return 0;
+    }
+
+    public static long glGetQueryObjecti64(int type, int id) {
+        return glGetQueryObjecti(type, id);
     }
 
 }

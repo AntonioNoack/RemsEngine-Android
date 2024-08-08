@@ -3,25 +3,24 @@ package me.anno.remsengine.android
 import android.annotation.SuppressLint
 import android.opengl.GLSurfaceView
 import android.view.MotionEvent
+import me.anno.engine.Events.addEvent
 import me.anno.input.Input
 import me.anno.input.Key
 import me.anno.input.Touch
-import me.anno.engine.Events.addEvent
 
 @SuppressLint("ViewConstructor")
 class SurfaceView(private val ctx: MainActivity) : GLSurfaceView(ctx) {
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val pid = event.getPointerId(event.actionIndex)
-        val isMouse = pid == 0
+        val isMouse = pid == 0 && event.pointerCount == 1
         val x = event.x
         val y = event.y
-        if (MainActivity.lastMouseX != x || MainActivity.lastMouseY != y) {
+        if (isMouse && (MainActivity.lastMouseX != x || MainActivity.lastMouseY != y)) {
             MainActivity.lastMouseX = x
             MainActivity.lastMouseY = y
             addEvent {
-                Touch.onTouchMove(pid, x, y)
-                if (isMouse) Input.onMouseMove(ctx.osWindow, x, y)
+                Input.onMouseMove(ctx.osWindow, x, y)
             }
             // only if there is a single pointer?
         }
@@ -30,6 +29,11 @@ class SurfaceView(private val ctx: MainActivity) : GLSurfaceView(ctx) {
             MotionEvent.ACTION_POINTER_DOWN -> addEvent {
                 Touch.onTouchDown(pid, x, y)
                 if (isMouse) Input.onMousePress(ctx.osWindow, Key.BUTTON_LEFT)
+            }
+            MotionEvent.ACTION_MOVE -> {
+                addEvent {
+                    Touch.onTouchMove(pid, x, y)
+                }
             }
             MotionEvent.ACTION_UP,
             MotionEvent.ACTION_POINTER_UP -> addEvent {

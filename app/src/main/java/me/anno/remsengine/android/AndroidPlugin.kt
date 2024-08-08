@@ -122,7 +122,11 @@ object AndroidPlugin : Plugin() {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     if (quality == 1f) CompressFormat.WEBP_LOSSLESS
                     else CompressFormat.WEBP_LOSSY
-                } else CompressFormat.WEBP
+                } else {
+                    // better versions not available
+                    @Suppress("DEPRECATION")
+                    CompressFormat.WEBP
+                }
             }
             "jpg".equals(format, true) || "jpeg".equals(format, true) -> {
                 CompressFormat.JPEG
@@ -137,7 +141,7 @@ object AndroidPlugin : Plugin() {
     }
 
     private fun writeImage(img: Image, dst: OutputStream, format: String, quality: Float) {
-        val intImage = img.createIntImage()
+        val intImage = img.asIntImage()
         val intData = intImage.data
         val bitmap = Bitmap.createBitmap(intData, img.width, img.height, Bitmap.Config.ARGB_8888)
         bitmap.compress(chooseFormat(format, quality), (quality * 100).toInt(), dst)
