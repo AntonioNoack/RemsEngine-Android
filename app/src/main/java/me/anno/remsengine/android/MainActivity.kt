@@ -108,7 +108,7 @@ class MainActivity : AppCompatActivity(),
 
         val engine = TestEngine("Rem's Engine") {
             val p = testScene(scene) {
-                it.renderer.renderMode = RenderMode.SIMPLE
+                it.renderView.renderMode = RenderMode.SIMPLE
             }
             //val p = SceneView(RenderView1(PlayMode.EDITING, scene, style), style)
             //p.renderer.renderMode = RenderMode.SIMPLE

@@ -1,6 +1,7 @@
 package me.anno.remsengine.android
 
 import android.opengl.GLES20
+import android.opengl.GLES30.GL_MAX_SAMPLES
 import android.opengl.GLSurfaceView
 import me.anno.Time
 import me.anno.config.DefaultConfig
@@ -18,9 +19,11 @@ import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL11.hasExtension
 import org.lwjgl.opengl.GL11.testShaderVersions
+import org.lwjgl.opengl.GL11.version10x
 import org.lwjgl.opengl.GL11C
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
+import kotlin.math.max
 
 class Renderer : GLSurfaceView.Renderer {
 
@@ -80,9 +83,11 @@ class Renderer : GLSurfaceView.Renderer {
                     val cap = GL.getCapabilities()
                     GFXBase.setStatic("capabilities", cap)
                     cap.GL_ARB_depth_texture = hasExtension("OES_depth_texture")
-                    GFX.maxSamples = 1 // max(1, GL11C.glGetInteger(GL_MAX_SAMPLES))
-                    // my emulator says 4, but only supports OpenGL ES 3.0...
-                    // if (version10x < 31) GFX.maxSamples = 1
+                    // multisampling on textures is only supported starting with OpenGL ES 3.1;
+                    // mutlisampled renderbuffers are supported earlier.
+                    // We'd need a differentiation between renderbuffer samples and texture samples.
+                    GFX.maxSamples = if (version10x < 31) 1 else
+                        max(1, GL11C.glGetInteger(GL_MAX_SAMPLES))
                     drawLogo(windowX.width, windowX.height, false)
                 }
                 in 1 until numLogoFrames -> {

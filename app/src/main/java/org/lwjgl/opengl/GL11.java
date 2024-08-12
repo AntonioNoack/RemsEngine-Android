@@ -20,10 +20,14 @@ import static android.opengl.GLES20.GL_COLOR_ATTACHMENT0;
 import static android.opengl.GLES20.GL_DEPTH_COMPONENT;
 import static android.opengl.GLES20.GL_DEPTH_COMPONENT16;
 import static android.opengl.GLES20.GL_LESS;
+import static android.opengl.GLES20.GL_TEXTURE_2D;
 import static android.opengl.GLES20.GL_UNSIGNED_INT;
 import static android.opengl.GLES20.GL_VALIDATE_STATUS;
 import static android.opengl.GLES20.GL_VERTEX_SHADER;
+import static android.opengl.GLES30.GL_MAX_SAMPLES;
+import static android.opengl.GLES30.GL_QUERY_RESULT_AVAILABLE;
 import static android.opengl.GLES30.GL_RGB8;
+import static android.opengl.GLES31.GL_TEXTURE_2D_MULTISAMPLE;
 import static org.lwjgl.opengl.GLStrings.getAttachment;
 import static org.lwjgl.opengl.GLStrings.getBufferTarget;
 import static org.lwjgl.opengl.GLStrings.getBufferUsage;
@@ -52,6 +56,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import me.anno.gpu.GFX;
@@ -89,7 +94,7 @@ public class GL11 {
     private static int activeTexture = 0;
     private static int boundFramebuffer, boundProgram;
 
-    private static int version10x;
+    public static int version10x;
     private static int glslVersion = 0;
 
     private static String glslVersionString;
@@ -210,6 +215,9 @@ public class GL11 {
     }
 
     public static int glGetInteger(int i) {
+        if (i == GL_MAX_SAMPLES && version10x < 31) {
+            return 1; // only supports samples on renderbuffers...
+        }
         check();
         GLES11.glGetIntegerv(i, tmpInt1, 0);
         if (print) System.out.println("glGetInteger(" + i + ")");
@@ -236,9 +244,16 @@ public class GL11 {
         check();
     }
 
+    private static int mapTextureTarget(int target) {
+        if (version10x < 31 && target == GL_TEXTURE_2D_MULTISAMPLE) {
+            target = GL_TEXTURE_2D;
+        }
+        return target;
+    }
+
     public static void glBindTexture(int target, int pointer) {
         check();
-        GLES11.glBindTexture(target, pointer);
+        GLES11.glBindTexture(mapTextureTarget(target), pointer);
         if (print || printTexBinds)
             System.out.println("glBindTexture[" + activeTexture + "](" + getTextureTarget(target) + ", " + pointer + ")");
         check();
@@ -300,6 +315,8 @@ public class GL11 {
                     getType(type));
         }
 
+        target = mapTextureTarget(target);
+
         if (format == GL_DEPTH_COMPONENT && !hasExtension("OES_depth_texture")) {
             new RuntimeException("Depth textures are not supported! (creating rgba texture instead)")
                     .printStackTrace();
@@ -337,6 +354,8 @@ public class GL11 {
                     getType(type));
         }
 
+        target = mapTextureTarget(target);
+
         check();
         if (internalFormat == GL_DEPTH_COMPONENT16) {// OpenGL ES is stricter
             format = GL_DEPTH_COMPONENT;
@@ -348,14 +367,18 @@ public class GL11 {
 
     public static void glTexImage2DMultisample(int target, int samples, int internalFormat, int width, int height, boolean fixedSamplePositions) {
         if (Build.VERSION.SDK_INT >= 21) {
-            check();
-            GLES31.glTexStorage2DMultisample(target, samples, internalFormat, width, height, fixedSamplePositions);
-            if (print)
-                System.out.println("glTexImage2DMultisample(" + getTextureTarget(target) +
-                        ", internal " + getFormat(internalFormat) + ", " + width + " x " + height + ", fixed?: " + fixedSamplePositions);
-            check();
-        } else
-            throw new RuntimeException("Operation glTexImage2DMultisample is not supported in Android API " + Build.VERSION.SDK_INT + ", min 21 is required");
+            if (version10x >= 31) {
+                check();
+                target = mapTextureTarget(target);
+                GLES31.glTexStorage2DMultisample(target, samples, internalFormat, width, height, fixedSamplePositions);
+                if (print)
+                    System.out.println("glTexImage2DMultisample(" + getTextureTarget(target) +
+                            ", internal " + getFormat(internalFormat) + ", " + width + " x " + height + ", fixed?: " + fixedSamplePositions);
+                check();
+            } else throw new RuntimeException("Operation glTexImage2DMultisample is not supported" +
+                    " in OpenGL ES " + version10x + ", min 31 is required");
+        } else throw new RuntimeException("Operation glTexImage2DMultisample is not supported" +
+                " in Android API " + Build.VERSION.SDK_INT + ", min 21 is required");
     }
 
     public static void glTexImage2D(int target, int level, int internalFormat, int width, int height, int border, int format, int type, int[] data) {
@@ -385,6 +408,8 @@ public class GL11 {
                     getFormat(format) + ", " +
                     getType(type));
         }
+
+        target = mapTextureTarget(target);
 
         check();
         ByteBuffer buffer0 = Texture2D.bufferPool.get(data.length * 4, false, false);
@@ -423,6 +448,7 @@ public class GL11 {
 
     public static void glTexSubImage2D(int target, int level, int x, int y, int w, int h, int format, int type, ByteBuffer data) {
         check();
+        target = mapTextureTarget(target);
         if (!disableTextures) GLES20.glTexSubImage2D(target, level, x, y, w, h, format, type, data);
         if (print || glGetError() != 0)
             System.out.println("glTexSubImage2D(" + getTextureTarget(target) + ", level " + level + ", " + x +
@@ -433,6 +459,7 @@ public class GL11 {
 
     public static void glTexSubImage2D(int target, int level, int x, int y, int w, int h, int format, int type, IntBuffer data) {
         check();
+        target = mapTextureTarget(target);
         if (!disableTextures) GLES20.glTexSubImage2D(target, level, x, y, w, h, format, type, data);
         if (print || glGetError() != 0)
             System.out.println("glTexSubImage2D(" + getTextureTarget(target) + ", level " + level + ", " + x +
@@ -468,6 +495,8 @@ public class GL11 {
                     getFormat(format) + ", " +
                     getType(type));
         }
+
+        target = mapTextureTarget(target);
 
         check();
 
@@ -527,6 +556,9 @@ public class GL11 {
                     GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, (ByteBuffer) null);
             return;
         }
+
+        target = mapTextureTarget(target);
+
         if (buffer == null || buffer.remaining() == 0) {
             GLES30.glTexImage3D(target, level, internalFormat, width, height, depth, border, format, type, (ByteBuffer) null);
         } else {
@@ -546,6 +578,7 @@ public class GL11 {
         check();
         if (print) System.out.println("glTexParameteri(" + getTextureTarget(target) + ", " +
                 getTexKey(key) + ", " + getTexValue(value) + ")");
+        target = mapTextureTarget(target);
         if (value == GLES32.GL_CLAMP_TO_BORDER && version10x < 32) {
             value = GL_CLAMP_TO_EDGE;
             if (!warnedClampToBorder) {
@@ -569,11 +602,13 @@ public class GL11 {
             return;
         }
         check();
+        target = mapTextureTarget(target);
         GLES11.glTexParameteriv(target, key, values, 0);
         check();
     }
 
     public static void glTexParameterfv(int target, int key, float[] values) {
+        target = mapTextureTarget(target);
         if (key == GLES32.GL_TEXTURE_BORDER_COLOR) {
             if (version10x >= 32) {
                 if (print) System.out.println("glTexParameterfv(" + getTextureTarget(target) +
@@ -629,6 +664,7 @@ public class GL11 {
 
     public static void glFramebufferTexture2D(int target, int attachment, int textureTarget, int texture, int level) {
         check();
+        textureTarget = mapTextureTarget(textureTarget);
         if (!disableFramebuffers)
             GLES20.glFramebufferTexture2D(target, attachment, textureTarget, texture, level);
         if (print)
@@ -1381,14 +1417,30 @@ public class GL11 {
         }
     }
 
+    private static long beginQueryTime;
+    private static int timeQueryId;
+    private static HashMap<Integer, Long> queriedTimes = new HashMap<>();
+
+    public static final int GL_TIME_ELAPSED = 0x88BF; // not supported
+
     public static void glBeginQuery(int target, int query) {
-        if (version10x >= 30) {
+        // allowed values:
+        // GL_ANY_SAMPLES_PASSED,
+        // GL_ANY_SAMPLES_PASSED_CONSERVATIVE, or
+        // GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN
+        if (target == GL_TIME_ELAPSED) {
+            beginQueryTime = System.nanoTime();
+            timeQueryId = query;
+        } else if (version10x >= 30) {
             GLES30.glBeginQuery(target, query);
         }
     }
 
     public static void glEndQuery(int target) {
-        if (version10x >= 30) {
+        if (target == GL_TIME_ELAPSED) {
+            long dt = System.nanoTime() - beginQueryTime;
+            queriedTimes.put(timeQueryId, dt);
+        } else if (version10x >= 30) {
             GLES30.glEndQuery(target);
         }
     }
@@ -1396,18 +1448,26 @@ public class GL11 {
     public static void glDeleteQueries(int[] ids) {
         if (version10x >= 30) {
             GLES30.glDeleteQueries(ids.length, ids, 0);
+            for (int id : ids) {
+                queriedTimes.remove(id);
+            }
         }
     }
 
-    public static int glGetQueryObjecti(int type, int id) {
-        if (version10x >= 30) {
-            GLES30.glGetQueryObjectuiv(type, id, tmpInt1, 0);
-            return tmpInt1[0];
-        } else return 0;
+    public static int glGetQueryObjecti(int id, int type) {
+        return (int) glGetQueryObjecti64(id, type);
     }
 
-    public static long glGetQueryObjecti64(int type, int id) {
-        return glGetQueryObjecti(type, id);
+    public static long glGetQueryObjecti64(int id, int type) {
+        // GL_QUERY_RESULT | GL_QUERY_RESULT_AVAILABLE
+        Long dt = queriedTimes.get(id);
+        if (dt != null) {
+            if (type == GL_QUERY_RESULT_AVAILABLE) return 1;
+            else return (int) (long) dt;
+        } else if (version10x >= 30) {
+            GLES30.glGetQueryObjectuiv(id, type, tmpInt1, 0);
+            return tmpInt1[0];
+        } else return 0;
     }
 
 }
