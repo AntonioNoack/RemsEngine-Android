@@ -214,13 +214,16 @@ public class GL11 {
         check();
     }
 
-    public static int glGetInteger(int i) {
-        if (i == GL_MAX_SAMPLES && version10x < 31) {
-            return 1; // only supports samples on renderbuffers...
+    public static int glGetInteger(int type) {
+        if (type == GL_MAX_SAMPLES && version10x < 31) {
+            // multisampling on textures is only supported starting with OpenGL ES 3.1;
+            // mutlisampled renderbuffers are supported earlier.
+            // We'd need a differentiation between renderbuffer samples and texture samples.
+            return 1;
         }
         check();
-        GLES11.glGetIntegerv(i, tmpInt1, 0);
-        if (print) System.out.println("glGetInteger(" + i + ")");
+        GLES11.glGetIntegerv(type, tmpInt1, 0);
+        if (print) System.out.println("glGetInteger(" + type + ")");
         check();
         return tmpInt1[0];
     }
@@ -1419,7 +1422,7 @@ public class GL11 {
 
     private static long beginQueryTime;
     private static int timeQueryId;
-    private static HashMap<Integer, Long> queriedTimes = new HashMap<>();
+    private static final HashMap<Integer, Long> queriedTimes = new HashMap<>();
 
     public static final int GL_TIME_ELAPSED = 0x88BF; // not supported
 
@@ -1448,9 +1451,9 @@ public class GL11 {
     public static void glDeleteQueries(int[] ids) {
         if (version10x >= 30) {
             GLES30.glDeleteQueries(ids.length, ids, 0);
-            for (int id : ids) {
-                queriedTimes.remove(id);
-            }
+        }
+        for (int id : ids) {
+            queriedTimes.remove(id);
         }
     }
 

@@ -5,6 +5,7 @@ import android.opengl.GLES30.GL_MAX_SAMPLES
 import android.opengl.GLSurfaceView
 import me.anno.Time
 import me.anno.config.DefaultConfig
+import me.anno.engine.EngineBase
 import me.anno.engine.Events.addEvent
 import me.anno.gpu.GFX
 import me.anno.gpu.GFXBase
@@ -83,11 +84,7 @@ class Renderer : GLSurfaceView.Renderer {
                     val cap = GL.getCapabilities()
                     GFXBase.setStatic("capabilities", cap)
                     cap.GL_ARB_depth_texture = hasExtension("OES_depth_texture")
-                    // multisampling on textures is only supported starting with OpenGL ES 3.1;
-                    // mutlisampled renderbuffers are supported earlier.
-                    // We'd need a differentiation between renderbuffer samples and texture samples.
-                    GFX.maxSamples = if (version10x < 31) 1 else
-                        max(1, GL11C.glGetInteger(GL_MAX_SAMPLES))
+                    GFX.maxSamples = GL11C.glGetInteger(GL_MAX_SAMPLES)
                     drawLogo(windowX.width, windowX.height, false)
                 }
                 in 1 until numLogoFrames -> {
@@ -106,6 +103,7 @@ class Renderer : GLSurfaceView.Renderer {
                     Touch.updateAll()
                     GFX.activeWindow = windowX
                     GFX.renderStep(windowX, true)
+                    EngineBase.showFPS = true
                     // draw the cursor for debug purposes
                     DrawRectangles.drawRect(
                         windowX.mouseX.toInt(),

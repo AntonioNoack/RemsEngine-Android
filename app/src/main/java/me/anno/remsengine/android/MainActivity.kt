@@ -18,7 +18,6 @@ import me.anno.ecs.Component
 import me.anno.ecs.Entity
 import me.anno.ecs.annotations.DebugAction
 import me.anno.ecs.components.light.sky.Skybox
-import me.anno.ecs.components.light.sky.SkyboxBase
 import me.anno.ecs.components.mesh.MeshComponent
 import me.anno.ecs.components.mesh.shapes.IcosahedronModel
 import me.anno.engine.EngineBase
@@ -31,8 +30,9 @@ import me.anno.engine.ui.render.RenderView0
 import me.anno.engine.ui.render.RenderView1
 import me.anno.engine.ui.render.SceneView
 import me.anno.engine.ui.render.SceneView.Companion.testScene
+import me.anno.engine.ui.scenetabs.ECSSceneTab
+import me.anno.engine.ui.scenetabs.ECSSceneTabs
 import me.anno.gpu.GFX
-import me.anno.gpu.OSWindow
 import me.anno.input.Input
 import me.anno.input.Key
 import me.anno.io.saveable.Saveable.Companion.registerCustomClass
@@ -43,8 +43,12 @@ import me.anno.utils.OS
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.opengl.GL11
 
+// todo create some small games to show our engine's capabilities
+//  - most 2d, because mobile
+//  - some easy 3d
+//  best just port them from our tests section
+
 // todo open keyboard when in text input
-// todo bug: when reloading everything, Texture2DArray (for chars) somehow isn't reset properly...
 
 class MainActivity : AppCompatActivity(),
     GestureDetector.OnGestureListener,
@@ -53,8 +57,6 @@ class MainActivity : AppCompatActivity(),
     private val renderer = Renderer()
 
     private var glSurfaceView: GLSurfaceView? = null
-
-    private var engine: EngineBase? = null
 
     val osWindow = GFX.someWindow
 
@@ -107,15 +109,18 @@ class MainActivity : AppCompatActivity(),
         scene.add(TestControls())
 
         val engine = TestEngine("Rem's Engine") {
-            val p = testScene(scene) {
-                it.renderView.renderMode = RenderMode.SIMPLE
+            val p = if (false) {
+                testScene(scene) {
+                    it.renderView.renderMode = RenderMode.SIMPLE
+                }
+            } else {
+                ECSSceneTabs.open(ECSSceneTab(scene.ref, PlayMode.EDITING), true)
+                val p = SceneView(RenderView0(PlayMode.EDITING, style), style)
+                p.renderView.renderMode = RenderMode.SIMPLE
+                p
             }
-            //val p = SceneView(RenderView1(PlayMode.EDITING, scene, style), style)
-            //p.renderer.renderMode = RenderMode.SIMPLE
-            p.fill(1f)
-            listOf(p)
+            listOf(p.fill(1f))
         }
-        this.engine = engine
 
         EngineBase.instance = engine
         EngineBase.showFPS = true
@@ -129,7 +134,6 @@ class MainActivity : AppCompatActivity(),
         GFX.gpuTasks.clear() // they couldn't be executed anyways
         engine.loadConfig()
         engine.tick("config")
-        this.engine = engine
 
         // Check if the system supports OpenGL ES 2.0.
         val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager

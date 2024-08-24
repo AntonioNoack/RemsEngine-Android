@@ -12,7 +12,8 @@ import me.anno.input.Touch
 class SurfaceView(private val ctx: MainActivity) : GLSurfaceView(ctx) {
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        val pid = event.getPointerId(event.actionIndex)
+        val index = event.actionIndex
+        val pid = event.getPointerId(index)
         val isMouse = pid == 0 && event.pointerCount == 1
         val x = event.x
         val y = event.y
@@ -26,20 +27,34 @@ class SurfaceView(private val ctx: MainActivity) : GLSurfaceView(ctx) {
         }
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN,
-            MotionEvent.ACTION_POINTER_DOWN -> addEvent {
-                Touch.onTouchDown(pid, x, y)
-                if (isMouse) Input.onMousePress(ctx.osWindow, Key.BUTTON_LEFT)
+            MotionEvent.ACTION_POINTER_DOWN -> {
+                addEvent {
+                    Touch.onTouchDown(pid, x, y)
+                    if (isMouse) Input.onMousePress(ctx.osWindow, Key.BUTTON_LEFT)
+                }
             }
             MotionEvent.ACTION_MOVE -> {
+                val xs = FloatArray(event.pointerCount)
+                val ys = FloatArray(event.pointerCount)
+                val ids = IntArray(event.pointerCount)
+                for (i in 0 until event.pointerCount) {
+                    ids[i] = event.getPointerId(i)
+                    xs[i] = event.getX(i)
+                    ys[i] = event.getY(i)
+                }
                 addEvent {
-                    Touch.onTouchMove(pid, x, y)
+                    for (i in xs.indices) {
+                        Touch.onTouchMove(ids[i], xs[i], ys[i])
+                    }
                 }
             }
             MotionEvent.ACTION_UP,
-            MotionEvent.ACTION_POINTER_UP -> addEvent {
-                Touch.onTouchUp(pid, x, y)
-                if (isMouse) Input.onMouseRelease(ctx.osWindow, Key.BUTTON_LEFT)
-                // update mouse position, when the gesture is finished (no more touches down)?
+            MotionEvent.ACTION_POINTER_UP -> {
+                addEvent {
+                    Touch.onTouchUp(pid, x, y)
+                    if (isMouse) Input.onMouseRelease(ctx.osWindow, Key.BUTTON_LEFT)
+                    // update mouse position, when the gesture is finished (no more touches down)?
+                }
             }
         }
         ctx.detector.onTouchEvent(event)
