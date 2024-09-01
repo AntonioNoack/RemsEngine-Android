@@ -61,6 +61,7 @@ import java.util.HashSet;
 
 import me.anno.gpu.GFX;
 import me.anno.gpu.texture.Texture2D;
+import me.anno.utils.pooling.Pools;
 
 @SuppressWarnings({"unused"})
 public class GL11 {
@@ -415,7 +416,7 @@ public class GL11 {
         target = mapTextureTarget(target);
 
         check();
-        ByteBuffer buffer0 = Texture2D.bufferPool.get(data.length * 4, false, false);
+        ByteBuffer buffer0 = Pools.byteBufferPool.get(data.length * 4, false, false);
         IntBuffer buffer = buffer0.asIntBuffer();
         if (needsCompress) {
             if (needsSwitch) {
@@ -445,7 +446,7 @@ public class GL11 {
             else
                 GLES20.glTexImage2D(target, level, internalFormat, width, height, border, format, type, (ByteBuffer) null);
         }
-        Texture2D.bufferPool.returnBuffer(buffer0);
+        Pools.byteBufferPool.returnBuffer(buffer0);
         check();
     }
 
@@ -503,7 +504,7 @@ public class GL11 {
 
         check();
 
-        ByteBuffer buffer0 = Texture2D.bufferPool.get(data.length * 4, false, false);
+        ByteBuffer buffer0 = Pools.byteBufferPool.get(data.length * 4, false, false);
         IntBuffer buffer = buffer0.asIntBuffer();
         if (needsCompress) {
             if (needsSwitch) {
@@ -533,7 +534,7 @@ public class GL11 {
             else
                 GLES30.glTexImage3D(target, level, internalFormat, width, height, depth, border, format, type, (ByteBuffer) null);
         }
-        Texture2D.bufferPool.returnBuffer(buffer0);
+        Pools.byteBufferPool.returnBuffer(buffer0);
         check();
     }
 

@@ -18,6 +18,7 @@ import me.anno.ecs.Component
 import me.anno.ecs.Entity
 import me.anno.ecs.annotations.DebugAction
 import me.anno.ecs.components.light.sky.Skybox
+import me.anno.ecs.components.light.sky.SkyboxBase
 import me.anno.ecs.components.mesh.MeshComponent
 import me.anno.ecs.components.mesh.shapes.IcosahedronModel
 import me.anno.engine.EngineBase
@@ -27,7 +28,6 @@ import me.anno.engine.ui.render.PlayMode
 import me.anno.engine.ui.render.RenderMode
 import me.anno.engine.ui.render.RenderView
 import me.anno.engine.ui.render.RenderView0
-import me.anno.engine.ui.render.RenderView1
 import me.anno.engine.ui.render.SceneView
 import me.anno.engine.ui.render.SceneView.Companion.testScene
 import me.anno.engine.ui.scenetabs.ECSSceneTab
@@ -104,12 +104,13 @@ class MainActivity : AppCompatActivity(),
         registerCustomClass(TestControls())
 
         val scene = Entity()
-        scene.add(Skybox())
+        // scene.add(Skybox().apply { cumulus = 0f; cirrus = 0f })
+        scene.add(SkyboxBase())
         scene.add(MeshComponent(IcosahedronModel.createIcosphere(4)))
         scene.add(TestControls())
 
         val engine = TestEngine("Rem's Engine") {
-            val p = if (false) {
+            val p = if (true) {
                 testScene(scene) {
                     it.renderView.renderMode = RenderMode.SIMPLE
                 }
