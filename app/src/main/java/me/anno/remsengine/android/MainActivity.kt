@@ -33,6 +33,7 @@ import me.anno.engine.ui.render.SceneView.Companion.testScene
 import me.anno.engine.ui.scenetabs.ECSSceneTab
 import me.anno.engine.ui.scenetabs.ECSSceneTabs
 import me.anno.gpu.GFX
+import me.anno.gpu.GPUTasks
 import me.anno.input.Input
 import me.anno.input.Key
 import me.anno.io.saveable.Saveable.Companion.registerCustomClass
@@ -132,7 +133,7 @@ class MainActivity : AppCompatActivity(),
         // GFX.onInit = engine::gameInit
         // GFX.onLoop = engine::onGameLoop
         // GFX.onShutdown = engine::onShutdown
-        GFX.gpuTasks.clear() // they couldn't be executed anyways
+        GPUTasks.gpuTasks.clear() // they couldn't be executed anyways
         engine.loadConfig()
         engine.tick("config")
 

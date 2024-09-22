@@ -59,7 +59,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import me.anno.gpu.GFX;
+import me.anno.gpu.GLNames;
 import me.anno.gpu.texture.Texture2D;
 import me.anno.utils.pooling.Pools;
 
@@ -117,15 +117,15 @@ public class GL11 {
         if (disableChecks) return;
         int error = glGetError();
         if (error != 0)
-            throw new RuntimeException("OpenGL returned error " + GFX.getErrorTypeName(error) + " for mode " + mode);
+            throw new RuntimeException("OpenGL returned error " + GLNames.getErrorTypeName(error) + " for mode " + mode);
     }
 
     protected static void check() {
         if (disableChecks) return;
         int error = glGetError();
         if (error != 0) {
-            System.err.println("OpenGL returned error " + GFX.getErrorTypeName(error));
-            new RuntimeException("OpenGL returned error " + GFX.getErrorTypeName(error) +
+            System.err.println("OpenGL returned error " + GLNames.getErrorTypeName(error));
+            new RuntimeException("OpenGL returned error " + GLNames.getErrorTypeName(error) +
                     ", 0x" + Integer.toString(error, 16)).printStackTrace();
             // System.exit(error);
         }

@@ -8,10 +8,11 @@ import me.anno.config.DefaultConfig
 import me.anno.engine.EngineBase
 import me.anno.engine.Events.addEvent
 import me.anno.gpu.GFX
-import me.anno.gpu.GFXBase
 import me.anno.gpu.GFXState
 import me.anno.gpu.Logo.drawLogo
 import me.anno.gpu.Logo.logoBackgroundColor
+import me.anno.gpu.RenderStep
+import me.anno.gpu.WindowManagement
 import me.anno.gpu.drawing.DrawRectangles
 import me.anno.input.Touch
 import me.anno.remsengine.android.MainActivity.Companion.setStatic
@@ -20,11 +21,9 @@ import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL11.hasExtension
 import org.lwjgl.opengl.GL11.testShaderVersions
-import org.lwjgl.opengl.GL11.version10x
 import org.lwjgl.opengl.GL11C
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
-import kotlin.math.max
 
 class Renderer : GLSurfaceView.Renderer {
 
@@ -82,7 +81,7 @@ class Renderer : GLSurfaceView.Renderer {
             when (frameIndex++) {
                 0 -> {
                     val cap = GL.getCapabilities()
-                    GFXBase.setStatic("capabilities", cap)
+                    WindowManagement.setStatic("capabilities", cap)
                     cap.GL_ARB_depth_texture = hasExtension("OES_depth_texture")
                     GFX.maxSamples = GL11C.glGetInteger(GL_MAX_SAMPLES)
                     drawLogo(windowX.width, windowX.height, false)
@@ -94,15 +93,15 @@ class Renderer : GLSurfaceView.Renderer {
                     drawLogo(windowX.width, windowX.height, true)
                     KeyMap.defineKeys()
                     GFX.check()
-                    GFXBase.init2(null)
+                    WindowManagement.init2(null)
                 }
                 else -> {
-                    GFXBase.updateWindows()
+                    WindowManagement.updateWindows()
                     Time.updateTime()
                     // Input.pollControllers(windowX)
                     Touch.updateAll()
                     GFX.activeWindow = windowX
-                    GFX.renderStep(windowX, true)
+                    RenderStep.renderStep(windowX, true)
                     EngineBase.showFPS = true
                     // draw the cursor for debug purposes
                     DrawRectangles.drawRect(

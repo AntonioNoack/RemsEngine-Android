@@ -11,6 +11,7 @@ import me.anno.fonts.TextGroup
 import me.anno.fonts.keys.FontKey
 import me.anno.fonts.mesh.CharacterOffsetCache
 import me.anno.gpu.GFX
+import me.anno.gpu.GPUTasks
 import me.anno.gpu.drawing.DrawTexts
 import me.anno.gpu.drawing.GFXx2D
 import me.anno.gpu.texture.FakeWhiteTexture
@@ -63,7 +64,7 @@ class TextGen(key: FontKey) : TextGenerator {
             )
             callback.ok(texture)
         } else {
-            GFX.addGPUTask("awtAtlas", width, height) {
+            GPUTasks.addGPUTask("awtAtlas", width, height) {
                 createASCIITexture(
                     texture, portableImages,
                     textColor, backgroundColor, extraPadding
@@ -157,7 +158,7 @@ class TextGen(key: FontKey) : TextGenerator {
             )
             callback.ok(texture)
         } else {
-            GFX.addGPUTask("awt-font-v5", width, height) {
+            GPUTasks.addGPUTask("awt-font-v5", width, height) {
                 createImage(
                     texture, portableImages,
                     textColor, backgroundColor,
