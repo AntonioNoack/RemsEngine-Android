@@ -677,17 +677,25 @@ public class GL11 {
         check();
     }
 
-    public static void glDrawBuffer(int buffer) {
-        check();
+    private static void determineDrawBuffers() {
         if (supportsDrawBuffers == null) {
-            supportsDrawBuffers = version10x >= 30 && hasExtension("GL_EXT_draw_buffers");
+            supportsDrawBuffers = version10x >= 30 || hasExtension("GL_EXT_draw_buffers");
             if (supportsDrawBuffers == Boolean.TRUE) {
                 GLES30.glGetIntegerv(GLES30.GL_MAX_DRAW_BUFFERS, tmpInt1, 0);
                 maxDrawBuffers = tmpInt1[0];
                 System.out.println("MaxDrawBuffers: " + maxDrawBuffers);
             }
         }
-        if (supportsDrawBuffers == Boolean.FALSE) {
+    }
+
+    public static boolean supportsDrawBuffers() {
+        determineDrawBuffers();
+        return supportsDrawBuffers;
+    }
+
+    public static void glDrawBuffer(int buffer) {
+        check();
+        if (!supportsDrawBuffers()) {
             if (buffer != GL_COLOR_ATTACHMENT0)
                 System.err.println("Setting glDrawBuffer to " + buffer + " is not supported!");
             return;
@@ -705,10 +713,8 @@ public class GL11 {
 
     public static void glDrawBuffers(int[] buffers) {
         check();
-        if (supportsDrawBuffers == null) {
-            supportsDrawBuffers = version10x >= 30 && hasExtension("GL_EXT_draw_buffers");
-        }
-        if (supportsDrawBuffers == Boolean.FALSE) {
+        determineDrawBuffers();
+        if (!supportsDrawBuffers()) {
             if (buffers.length != 1 || buffers[0] != GL_COLOR_ATTACHMENT0) {
                 System.err.println("Setting glDrawBuffer to " + Arrays.toString(buffers) + " is not supported!");
             }

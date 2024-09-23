@@ -84,6 +84,11 @@ class Renderer : GLSurfaceView.Renderer {
                     WindowManagement.setStatic("capabilities", cap)
                     cap.GL_ARB_depth_texture = hasExtension("OES_depth_texture")
                     GFX.maxSamples = GL11C.glGetInteger(GL_MAX_SAMPLES)
+                    if (!GL11.supportsDrawBuffers()) {
+                        // OpenGL needs the drawBuffers()-call to be made
+                        // to properly render onto multiple attachments
+                        GFX.maxColorAttachments = 1
+                    }
                     drawLogo(windowX.width, windowX.height, false)
                 }
                 in 1 until numLogoFrames -> {

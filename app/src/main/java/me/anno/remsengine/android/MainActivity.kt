@@ -17,15 +17,15 @@ import me.anno.config.DefaultConfig.style
 import me.anno.ecs.Component
 import me.anno.ecs.Entity
 import me.anno.ecs.annotations.DebugAction
-import me.anno.ecs.components.light.sky.Skybox
 import me.anno.ecs.components.light.sky.SkyboxBase
 import me.anno.ecs.components.mesh.MeshComponent
-import me.anno.ecs.components.mesh.shapes.IcosahedronModel
+import me.anno.engine.DefaultAssets
 import me.anno.engine.EngineBase
 import me.anno.engine.Events.addEvent
 import me.anno.engine.ui.control.DraggingControls
 import me.anno.engine.ui.render.PlayMode
 import me.anno.engine.ui.render.RenderMode
+import me.anno.engine.ui.render.RenderMode.Companion.opaqueNodeSettings
 import me.anno.engine.ui.render.RenderView
 import me.anno.engine.ui.render.RenderView0
 import me.anno.engine.ui.render.SceneView
@@ -34,6 +34,9 @@ import me.anno.engine.ui.scenetabs.ECSSceneTab
 import me.anno.engine.ui.scenetabs.ECSSceneTabs
 import me.anno.gpu.GFX
 import me.anno.gpu.GPUTasks
+import me.anno.graph.visual.render.QuickPipeline
+import me.anno.graph.visual.render.effects.SSAONode
+import me.anno.graph.visual.render.scene.RenderDeferredNode
 import me.anno.input.Input
 import me.anno.input.Key
 import me.anno.io.saveable.Saveable.Companion.registerCustomClass
@@ -107,18 +110,22 @@ class MainActivity : AppCompatActivity(),
         val scene = Entity()
         // scene.add(Skybox().apply { cumulus = 0f; cirrus = 0f })
         scene.add(SkyboxBase())
-        scene.add(MeshComponent(IcosahedronModel.createIcosphere(4)))
+        // scene.add(MeshComponent(IcosahedronModel.createIcosphere(4)))
+        scene.add(MeshComponent(DefaultAssets.flatCube))
         scene.add(TestControls())
 
+        val renderMode = if (true) {
+            testRenderMode.value
+        } else RenderMode.SIMPLE
         val engine = TestEngine("Rem's Engine") {
             val p = if (true) {
                 testScene(scene) {
-                    it.renderView.renderMode = RenderMode.SIMPLE
+                    it.renderView.renderMode = renderMode
                 }
             } else {
                 ECSSceneTabs.open(ECSSceneTab(scene.ref, PlayMode.EDITING), true)
                 val p = SceneView(RenderView0(PlayMode.EDITING, style), style)
-                p.renderView.renderMode = RenderMode.SIMPLE
+                p.renderView.renderMode = renderMode
                 p
             }
             listOf(p.fill(1f))
@@ -264,6 +271,20 @@ class MainActivity : AppCompatActivity(),
     companion object {
 
         private val LOGGER = LogManager.getLogger(MainActivity::class)
+
+        val testRenderMode = lazy {
+            RenderMode(
+                "Testing",
+                QuickPipeline()
+                    .then1(RenderDeferredNode(), opaqueNodeSettings)
+                    .then(
+                        SSAONode(),
+                        mapOf("Strength" to 1000f),
+                        mapOf("Ambient Occlusion" to listOf("Illuminated"))
+                    )
+                    .finish()
+            )
+        }
 
         var lastMouseX = 0f
         var lastMouseY = 0f
