@@ -14,12 +14,15 @@ import static android.opengl.GLES10.GL_RGB;
 import static android.opengl.GLES10.GL_RGBA;
 import static android.opengl.GLES10.GL_TEXTURE0;
 import static android.opengl.GLES10.GL_UNPACK_ALIGNMENT;
+import static android.opengl.GLES11.GL_ELEMENT_ARRAY_BUFFER;
 import static android.opengl.GLES11.GL_GENERATE_MIPMAP;
 import static android.opengl.GLES11Ext.GL_BGRA;
+import static android.opengl.GLES20.GL_ARRAY_BUFFER;
 import static android.opengl.GLES20.GL_COLOR_ATTACHMENT0;
 import static android.opengl.GLES20.GL_DEPTH_COMPONENT;
 import static android.opengl.GLES20.GL_DEPTH_COMPONENT16;
 import static android.opengl.GLES20.GL_LESS;
+import static android.opengl.GLES20.GL_LINES;
 import static android.opengl.GLES20.GL_TEXTURE_2D;
 import static android.opengl.GLES20.GL_UNSIGNED_INT;
 import static android.opengl.GLES20.GL_VALIDATE_STATUS;
@@ -86,14 +89,22 @@ public class GL11 {
 
     public static final int GL_TRIANGLES = GLES11.GL_TRIANGLES;
     public static final int GL_QUADS = 7;// why is this missing for OpenGL ES? legacy, even in normal OpenGL
+    public static final int GL_POINT = 0x1B00;
+    public static final int GL_LINE = 0x1B01;
+    public static final int GL_FILL = 0x1B02;
 
     public static final int GL_DEBUG_OUTPUT = 0x92E0;
     public static final int GL_TEXTURE_SWIZZLE_RGBA = 36422;// since OpenGL ES 3.3, which somehow isn't part of Android...
 
     // OpenGL is single-threaded, so we can use this static instance
     private static final int[] tmpInt1 = new int[1];
+    /*private static final IntBuffer tmpInt1b = ByteBuffer.allocateDirect(4)
+            .order(ByteOrder.nativeOrder())
+            .asIntBuffer();*/
     private static int activeTexture = 0;
     private static int boundFramebuffer, boundProgram;
+    private static int boundArrayBuffer, boundElementBuffer;
+    private static int polygonMode = GL_FILL;
 
     public static int version10x;
     private static int glslVersion = 0;
@@ -271,6 +282,8 @@ public class GL11 {
         if (print)
             System.out.println("glBindBuffer(" + getBufferTarget(target) + ", " + pointer + ")");
         GLES11.glBindBuffer(target, pointer);
+        if (target == GL_ARRAY_BUFFER) boundArrayBuffer = pointer;
+        if (target == GL_ELEMENT_ARRAY_BUFFER) boundElementBuffer = pointer;
         check();
     }
 
@@ -1143,9 +1156,18 @@ public class GL11 {
         check();
     }
 
+    private static int overrideMode(int mode) {
+        // far from ideal, but it should provide the basic look...
+        // todo if OpenGL ES 3.0 is present, we could inject a geometry shader somehow,
+        //  which then maps triangles to lines
+        if (polygonMode == GL_LINE && mode == GL_TRIANGLES) mode = GL_LINES;
+        return mode;
+    }
+
     public static void glDrawArrays(int mode, int first, int count) {
         check();
         checkProgramStatus();
+        mode = overrideMode(mode);
         if (!disableDrawing) GLES20.glDrawArrays(mode, first, count);
         if (print)
             System.out.println("glDrawArrays(" + getDrawMode(mode) + ", " + first + ", " + count + ")");
@@ -1156,6 +1178,7 @@ public class GL11 {
     public static void glDrawArraysInstanced(int mode, int first, int count, int instanceCount) {
         check();
         checkProgramStatus();
+        mode = overrideMode(mode);
         if (!disableDrawing) GLES30.glDrawArraysInstanced(mode, first, count, instanceCount);
         if (print)
             System.out.println("glDrawArrays(" + getDrawMode(mode) + ", " + first + ", " + count + ")");
@@ -1166,6 +1189,7 @@ public class GL11 {
     public static void glDrawElements(int mode, int count, int type, int offset) {
         check();
         checkProgramStatus();
+        mode = overrideMode(mode);
         if (!disableDrawing) GLES20.glDrawElements(mode, count, type, offset);
         if (print)
             System.out.println("glDrawElements(" + getDrawMode(mode) + ", " + count + "x, " + getType(type) + ", " + offset + ")");
@@ -1177,6 +1201,7 @@ public class GL11 {
         if (data != 0) throw new RuntimeException("Expected data pointer to be null");
         check();
         checkProgramStatus();
+        mode = overrideMode(mode);
         if (!disableDrawing) GLES20.glDrawElements(mode, count, type, 0);
         if (print)
             System.out.println("glDrawElements(" + getDrawMode(mode) + ", " + count + "x, " + getType(type) + ")");
@@ -1186,10 +1211,14 @@ public class GL11 {
 
     public static void glDrawElementsInstanced(int mode, int count, int type, long firstInstanceIndex, int instanceCount) {
 
-        if (firstInstanceIndex > Integer.MAX_VALUE)
-            throw new RuntimeException("First instance index must be less than 2e9");
+        if (firstInstanceIndex > Integer.MAX_VALUE) {
+            LOGGER.warn("First instance index must be less than 2e9, got {}", firstInstanceIndex);
+            return;
+        }
 
+        check();
         checkProgramStatus();
+        mode = overrideMode(mode);
 
         // crashes the same way
         // GLES30.glDrawElements(mode, count, type, 0);
@@ -1419,6 +1448,10 @@ public class GL11 {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && version10x >= 32) {
             GLES32.glPopDebugGroup();
         }
+    }
+
+    public static void glPolygonMode(int backAndFront, int fillOrLineMode) {
+        polygonMode = fillOrLineMode;
     }
 
     public static void glGenQueries(int[] ids) {

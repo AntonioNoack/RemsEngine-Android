@@ -16,6 +16,8 @@ import me.anno.fonts.signeddistfields.Contour
 import me.anno.fonts.signeddistfields.edges.LinearSegment
 import me.anno.image.Image
 import me.anno.image.ImageCache
+import me.anno.image.ImageStreamWriter
+import me.anno.image.raw.IFloatImage
 import me.anno.image.raw.IntImage
 import me.anno.io.MediaMetadata
 import me.anno.maths.geometry.MarchingSquares
@@ -56,7 +58,7 @@ object AndroidPlugin : Plugin() {
             }
         }
 
-        Image.writeImageImpl = this::writeImage
+        Image.writeImageImpl = ImageStreamWriter(this::writeImage)
 
         FontStats.getDefaultFontSizeImpl = {
             val dm = Resources.getSystem().displayMetrics
@@ -140,11 +142,16 @@ object AndroidPlugin : Plugin() {
         }
     }
 
-    private fun writeImage(img: Image, dst: OutputStream, format: String, quality: Float) {
-        val intImage = img.asIntImage()
-        val intData = intImage.data
-        val bitmap = Bitmap.createBitmap(intData, img.width, img.height, Bitmap.Config.ARGB_8888)
-        bitmap.compress(chooseFormat(format, quality), (quality * 100).toInt(), dst)
-        bitmap.recycle()
+    private fun writeImage(image: Image, output: OutputStream, format: String, quality: Float) {
+        if (image is IFloatImage && format == "hdr") {
+            Image.writeHDR(image, output)
+        } else {
+            val intImage = image.asIntImage()
+            val intData = intImage.data
+            val bitmap =
+                Bitmap.createBitmap(intData, image.width, image.height, Bitmap.Config.ARGB_8888)
+            bitmap.compress(chooseFormat(format, quality), (quality * 100).toInt(), output)
+            bitmap.recycle()
+        }
     }
 }

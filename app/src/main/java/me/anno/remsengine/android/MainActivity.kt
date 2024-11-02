@@ -135,8 +135,6 @@ class MainActivity : AppCompatActivity(),
         EngineBase.showFPS = true
         engine.setupNames()
         engine.tick("run")
-        Logging.setup()
-        engine.tick("logging")
         // GFX.onInit = engine::gameInit
         // GFX.onLoop = engine::onGameLoop
         // GFX.onShutdown = engine::onShutdown
