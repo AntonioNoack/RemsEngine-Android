@@ -8,8 +8,12 @@ import me.anno.input.Input
 import me.anno.input.Key
 import me.anno.input.Touch
 
+/**
+ * Where the graphics are drawn onto; catches all events for later handling.
+ * */
 @SuppressLint("ViewConstructor")
 class SurfaceView(private val ctx: MainActivity) : GLSurfaceView(ctx) {
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val index = event.actionIndex

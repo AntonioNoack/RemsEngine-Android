@@ -11,9 +11,9 @@ import me.anno.gpu.GFXState
 import me.anno.gpu.Logo
 import me.anno.gpu.Logo.logoBackgroundColor
 import me.anno.gpu.RenderStep
+import me.anno.gpu.RenderStep.renderStep
 import me.anno.gpu.WindowManagement
 import me.anno.gpu.drawing.DrawRectangles
-import me.anno.input.Touch
 import me.anno.remsengine.android.MainActivity.Companion.setStatic
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.opengl.GL
@@ -24,6 +24,9 @@ import org.lwjgl.opengl.GL11C
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
+/**
+ * Renders the content onto the SurfaceView
+ * */
 class Renderer : GLSurfaceView.Renderer {
 
     private val logger = LogManager.getLogger(Renderer::class)
@@ -55,6 +58,7 @@ class Renderer : GLSurfaceView.Renderer {
 
     private var frameIndex = 0
     private val numLogoFrames = 8
+
     override fun onDrawFrame(gl: GL10?) {
         // run drawing function
         try {
@@ -62,13 +66,12 @@ class Renderer : GLSurfaceView.Renderer {
             DefaultConfig["ui.sparseRedraw"] = true
             logoBackgroundColor = 0xff99aaff.toInt()
             GFX.glThread = Thread.currentThread()
-            val windowX = GFX.someWindow
-            GFX.activeWindow = windowX
+            val window = GFX.someWindow
+            GFX.activeWindow = window
             GFX.check()
 
             GL11C.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
-            GL11C.glViewport(0, 0, windowX.width, windowX.height)
-            GLES20.glEnable(GLES20.GL_DEPTH_TEST) // todo why aren't we setting this?
+            GL11C.glViewport(0, 0, window.width, window.height)
 
             when (frameIndex++) {
                 0 -> {
@@ -81,32 +84,28 @@ class Renderer : GLSurfaceView.Renderer {
                         // to properly render onto multiple attachments
                         GFX.maxColorAttachments = 1
                     }
-                    Logo.drawLogo(windowX.width, windowX.height)
+                    WindowRenderFlags.showFPS = true
+                    // prepareForRendering would normally set this
+                    GLES20.glEnable(GLES20.GL_DEPTH_TEST)
+                    Logo.drawLogo(window.width, window.height)
                 }
                 in 1 until numLogoFrames -> {
-                    Logo.drawLogo(windowX.width, windowX.height)
+                    Logo.drawLogo(window.width, window.height)
                 }
                 numLogoFrames -> {
-                    Logo.drawLogo(windowX.width, windowX.height)
+                    Logo.drawLogo(window.width, window.height)
                     Logo.destroy()
                     KeyMap.defineKeys()
                     GFX.check()
                     WindowManagement.init2(null)
                 }
                 else -> {
-                    WindowManagement.updateWindows()
+                    // from WindowManagement.runRenderLoopWithWindowUpdates() and WindowManagement.renderFrame()
                     Time.updateTime()
-                    // Input.pollControllers(windowX)
-                    Touch.updateAll()
-                    GFX.activeWindow = windowX
-                    RenderStep.renderStep(windowX, true)
-                    WindowRenderFlags.showFPS = true
-                    // draw the cursor for debug purposes
-                    DrawRectangles.drawRect(
-                        windowX.mouseX.toInt(),
-                        windowX.mouseY.toInt(),
-                        6, 6, -1
-                    )
+                    WindowManagement.updateWindows()
+                    RenderStep.beforeRenderSteps()
+                    GFX.activeWindow = window
+                    renderStep(window, true)
                 }
             }
             GFX.check()
