@@ -3,9 +3,9 @@ package me.anno.remsengine.android
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import androidx.core.graphics.createBitmap
 import me.anno.fonts.Font
-import me.anno.fonts.FontManager
-import me.anno.fonts.FontStats
+import me.anno.fonts.FontManager.getAvgFontSize
 import me.anno.fonts.TextGenerator
 import me.anno.fonts.TextGroup
 import me.anno.fonts.keys.FontKey
@@ -21,6 +21,7 @@ import me.anno.gpu.texture.Texture2DArray
 import me.anno.maths.Maths
 import me.anno.remsengine.android.AndroidPlugin.getPaint
 import me.anno.utils.async.Callback
+import me.anno.utils.types.Floats.toIntOr
 import me.anno.utils.types.Strings.isBlank2
 import me.anno.utils.types.Strings.shorten
 import kotlin.math.max
@@ -29,9 +30,19 @@ import kotlin.math.roundToInt
 
 class TextGen(key: FontKey) : TextGenerator {
 
-    private val font =
-        Font(key.name, FontManager.getAvgFontSize(key.sizeIndex), key.bold, key.italic)
-    private val height = FontStats.getFontHeight(font).toInt()
+    private val font = Font(key.name, getAvgFontSize(key.sizeIndex), key.bold, key.italic)
+    private val metrics = getPaint(font).fontMetrics
+
+    // top, bottom: -29.507143, 7.571181
+    private val height = (metrics.bottom - metrics.top).toIntOr()
+
+    override fun getBaselineY(): Float {
+        return -metrics.top
+    }
+
+    override fun getLineHeight(): Float {
+        return height.toFloat()
+    }
 
     private fun getStringWidth(group: TextGroup) = group.offsets.last() - group.offsets.first()
     private fun createGroup(font: Font, text: CharSequence): TextGroup = TextGroup(font, text, 0.0)
@@ -45,7 +56,7 @@ class TextGen(key: FontKey) : TextGenerator {
 
     override fun generateASCIITexture(
         portableImages: Boolean, callback: Callback<Texture2DArray>,
-        textColor: Int, backgroundColor: Int, extraPadding: Int
+        textColor: Int, backgroundColor: Int
     ) {
 
         val widthLimit = GFX.maxTextureSize
@@ -53,21 +64,21 @@ class TextGen(key: FontKey) : TextGenerator {
 
         val alignment = CharacterOffsetCache.getOffsetCache(font)
         val size = alignment.getOffset('w'.code, 'w'.code)
-        val width = min(widthLimit, size.roundToInt() + 1 + 2 * extraPadding)
-        val height = min(heightLimit, height + 2 * extraPadding)
+        val width = min(widthLimit, size.roundToInt() + 1)
+        val height = min(heightLimit, height)
 
         val texture = Texture2DArray("awtAtlas", width, height, DrawTexts.simpleChars.size)
         if (GFX.isGFXThread()) {
             createASCIITexture(
                 texture, portableImages,
-                textColor, backgroundColor, extraPadding
+                textColor, backgroundColor
             )
             callback.ok(texture)
         } else {
             GPUTasks.addGPUTask("awtAtlas", width, height) {
                 createASCIITexture(
                     texture, portableImages,
-                    textColor, backgroundColor, extraPadding
+                    textColor, backgroundColor
                 )
                 callback.ok(texture)
             }
@@ -76,14 +87,9 @@ class TextGen(key: FontKey) : TextGenerator {
 
     private fun createASCIITexture(
         texture: Texture2DArray, portableImages: Boolean,
-        textColor: Int, backgroundColor: Int,
-        extraPadding: Int
+        textColor: Int, backgroundColor: Int
     ) {
-        val bitmap = Bitmap.createBitmap(
-            texture.width,
-            texture.height * texture.layers,
-            Bitmap.Config.ARGB_8888
-        )
+        val bitmap = createBitmap(texture.width, texture.height * texture.layers)
         val canvas = Canvas(bitmap)
         val paint = getPaint(font)
         // fill background with that color
@@ -92,10 +98,10 @@ class TextGen(key: FontKey) : TextGenerator {
         paint.color = textColor
         paint.textAlign = Paint.Align.CENTER
         paint.isSubpixelText = !portableImages
-        var y = extraPadding + paint.textSize
+        var y = paint.textSize
         val x = texture.width * 0.5f
         val dy = texture.height.toFloat()
-        for (yi in DrawTexts.simpleChars.indices) {
+        for (yi in DrawTexts.simpleChars.lastIndex downTo 0) {
             canvas.drawText(DrawTexts.simpleChars[yi], x, y, paint)
             y += dy
         }
@@ -104,9 +110,23 @@ class TextGen(key: FontKey) : TextGenerator {
     }
 
     private fun getPixels(bitmap: Bitmap): IntArray {
-        val pixels = IntArray(bitmap.width * bitmap.height)
-        bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+        val w = bitmap.width
+        val h = bitmap.height
+        val pixels = IntArray(w * h)
+        bitmap.getPixels(pixels, 0, w, 0, 0, w, h)
         bitmap.recycle()
+
+        // flip vertically for upload
+        val tmp = IntArray(w)
+        for (y0 in 0 until (h shr 1)) {
+            val y1 = h - 1 - y0
+            val i0 = y0 * w
+            val i1 = y1 * w
+            pixels.copyInto(tmp, 0, i0, i0 + w) // tmp = y0
+            pixels.copyInto(pixels, i0, i1, i1 + w) // y0 = y1
+            tmp.copyInto(pixels, i1) // y1 = tmp
+        }
+
         return pixels
     }
 
@@ -117,16 +137,15 @@ class TextGen(key: FontKey) : TextGenerator {
         portableImages: Boolean,
         callback: Callback<ITexture2D>,
         textColor: Int,
-        backgroundColor: Int,
-        extraPadding: Int
+        backgroundColor: Int
     ) {
 
         val group = createGroup(font, text)
-        val width = min(widthLimit, getStringWidth(group).roundToInt() + 1 + 2 * extraPadding)
+        val width = min(widthLimit, getStringWidth(group).roundToInt() + 1)
 
         val lineCount = 1
         val fontHeight = height
-        val height = min(heightLimit, fontHeight * lineCount + 2 * extraPadding)
+        val height = min(heightLimit, fontHeight * lineCount)
 
         if (width < 1 || height < 1) return callback.err(null)
         if (max(width, height) > GFX.maxTextureSize) {
@@ -154,7 +173,7 @@ class TextGen(key: FontKey) : TextGenerator {
             createImage(
                 texture, portableImages,
                 textColor, backgroundColor,
-                extraPadding, text.toString()
+                text.toString()
             )
             callback.ok(texture)
         } else {
@@ -162,7 +181,7 @@ class TextGen(key: FontKey) : TextGenerator {
                 createImage(
                     texture, portableImages,
                     textColor, backgroundColor,
-                    extraPadding, text.toString()
+                    text.toString()
                 )
                 callback.ok(texture)
             }
@@ -172,9 +191,9 @@ class TextGen(key: FontKey) : TextGenerator {
     private fun createImage(
         texture: Texture2D, portableImages: Boolean,
         textColor: Int, backgroundColor: Int,
-        extraPadding: Int, text: String
+        text: String
     ) {
-        val bitmap = Bitmap.createBitmap(texture.width, texture.height, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(texture.width, texture.height)
         val canvas = Canvas(bitmap)
         if (backgroundColor != 0) {
             // fill background with that color
@@ -186,7 +205,7 @@ class TextGen(key: FontKey) : TextGenerator {
         paint.color = textColor
         paint.textAlign = Paint.Align.CENTER
         paint.isSubpixelText = !portableImages
-        canvas.drawText(text, texture.width * 0.5f, extraPadding + paint.textSize, paint)
+        canvas.drawText(text, texture.width * 0.5f, paint.textSize, paint)
         val pixels = getPixels(bitmap)
         texture.createRGBA(pixels, false)
     }

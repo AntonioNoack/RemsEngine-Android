@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
+import androidx.core.graphics.createBitmap
 
 class TextToPixels(val w: Int, val h: Int, val values: FloatArray) {
     companion object {
@@ -19,7 +20,7 @@ class TextToPixels(val w: Int, val h: Int, val values: FloatArray) {
             h += 2
 
             // create pixels
-            val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ALPHA_8)
+            val bitmap = createBitmap(w, h, Bitmap.Config.ALPHA_8)
             val canvas = Canvas(bitmap)
             paint.color = -1
             val dx = -rect.left + 1

@@ -33,13 +33,13 @@ object AndroidPlugin : Plugin() {
     override fun onEnable() {
         super.onEnable()
 
-        MediaMetadata.registerSignatureHandler(100, "ImageIO") { file, signature, dst ->
+        MediaMetadata.registerSignatureHandler(100, "ImageIO") { file, signature, dst, _ ->
             when (signature) {
                 "png", "jpg", "webp" -> {
                     val options = BitmapFactory.Options()
                     options.inJustDecodeBounds = true
                     val bitmap = BitmapFactory.decodeStream(file.inputStreamSync(), null, options)
-                    dst.setImage(options.outWidth, options.outHeight)
+                    dst.setImageSize(options.outWidth, options.outHeight)
                     bitmap?.recycle() // should be null
                     true
                 }
@@ -48,8 +48,8 @@ object AndroidPlugin : Plugin() {
         }
 
         for (signature in listOf("png", "jpg", "gif", "bmp", "webp")) {
-            ImageCache.registerStreamReader(signature) { it, callback ->
-                val bitmap = BitmapFactory.decodeStream(it)
+            ImageCache.registerStreamReader(signature) { _, stream, callback ->
+                val bitmap = BitmapFactory.decodeStream(stream)
                 val values = IntArray(bitmap.width * bitmap.height)
                 bitmap.getPixels(values, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
                 val image = IntImage(bitmap.width, bitmap.height, values, bitmap.hasAlpha())
@@ -72,11 +72,11 @@ object AndroidPlugin : Plugin() {
             paint.getTextBounds(text, 0, text.length, rect)
             rect.right.toDouble()
         }
-        FontStats.getFontHeightImpl = { font ->
+        /*FontStats.getFontHeightImpl = { font ->
             val metrics = getPaint(font).fontMetrics
             // top, bottom: -29.507143, 7.571181
             (metrics.bottom - metrics.top).toDouble()
-        }
+        }*/
         Contour.calculateContoursImpl = { font, text ->
             val pixels = TextToPixels.createPixels(getPaint(font), text.toString())
             if (pixels != null) MarchingSquares.march(

@@ -107,7 +107,6 @@ public class GL11 {
     private static int polygonMode = GL_FILL;
 
     public static int version10x;
-    private static int glslVersion = 0;
 
     private static String glslVersionString;
 
@@ -163,8 +162,7 @@ public class GL11 {
             if (GLES20.glGetError() == 0) break;
         }
         if (print) System.out.println("Maximum supported GLSL version: " + maxVersion);
-        glslVersion = maxVersion;
-        glslVersionString = "#version " + glslVersion + " es\n";
+        glslVersionString = "#version " + maxVersion + " es\n";
         check();
     }
 
@@ -284,6 +282,14 @@ public class GL11 {
         GLES11.glBindBuffer(target, pointer);
         if (target == GL_ARRAY_BUFFER) boundArrayBuffer = pointer;
         if (target == GL_ELEMENT_ARRAY_BUFFER) boundElementBuffer = pointer;
+        check();
+    }
+
+    public static void glBindBufferBase(int target, int slot, int pointer) {
+        check();
+        if (print)
+            System.out.println("glBindBufferBase(" + getBufferTarget(target) + ", " + slot + ")");
+        GLES30.glBindBufferBase(target, slot, pointer);
         check();
     }
 
@@ -464,6 +470,17 @@ public class GL11 {
     }
 
     public static void glTexSubImage2D(int target, int level, int x, int y, int w, int h, int format, int type, ByteBuffer data) {
+        check();
+        target = mapTextureTarget(target);
+        if (!disableTextures) GLES20.glTexSubImage2D(target, level, x, y, w, h, format, type, data);
+        if (print || glGetError() != 0)
+            System.out.println("glTexSubImage2D(" + getTextureTarget(target) + ", level " + level + ", " + x +
+                    ", " + y + ", " + w + ", " + h + ", " + getFormat(format) +
+                    ", " + getType(type) + ", " + data + ")");
+        check();
+    }
+
+    public static void glTexSubImage2D(int target, int level, int x, int y, int w, int h, int format, int type, ShortBuffer data) {
         check();
         target = mapTextureTarget(target);
         if (!disableTextures) GLES20.glTexSubImage2D(target, level, x, y, w, h, format, type, data);
@@ -835,6 +852,7 @@ public class GL11 {
                 .replace("#version 400 es", glslVersionString)
                 .replace("#version 410 es", glslVersionString)
                 .replace("#version 420 es", glslVersionString)
+                .replace("#version 430 es", glslVersionString)
                 .replace("attribute ", "in "); // mmh, changed like this in OpenGL ES
         if (version10x < 32 && !hasExtension("GL_OES_sample_variables")) {
             str = str.replace("gl_SampleID", "0");
@@ -1354,6 +1372,14 @@ public class GL11 {
         check();
         GLES20.glDepthMask(doWriteDepth);
         if (print) System.out.println("glDepthMask(" + doWriteDepth + ")");
+        check();
+    }
+
+    public static void glColorMask(boolean red, boolean green, boolean blue, boolean alpha) {
+        check();
+        GLES20.glColorMask(red, green, blue, alpha);
+        if (print)
+            System.out.println("glColorMask(" + red + ", " + green + ", " + blue + ", " + alpha + ")");
         check();
     }
 

@@ -22,6 +22,7 @@ import me.anno.ecs.components.mesh.MeshComponent
 import me.anno.engine.DefaultAssets
 import me.anno.engine.EngineBase
 import me.anno.engine.Events.addEvent
+import me.anno.engine.WindowRenderFlags
 import me.anno.engine.ui.control.DraggingControls
 import me.anno.engine.ui.render.PlayMode
 import me.anno.engine.ui.render.RenderMode
@@ -42,8 +43,10 @@ import me.anno.input.Key
 import me.anno.io.saveable.Saveable.Companion.registerCustomClass
 import me.anno.remsengine.android.KeyMap.keyCodeMapping
 import me.anno.ui.debug.TestEngine
+import me.anno.utils.GFXFeatures
 import me.anno.utils.Logging
 import me.anno.utils.OS
+import me.anno.utils.OSFeatures
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.opengl.GL11
 
@@ -75,8 +78,26 @@ class MainActivity : AppCompatActivity(),
             val instance = RenderView.currentInstance!!
             val controls = instance.controlScheme as DraggingControls
             controls.resetCamera()
-            instance.radius = 3.0
+            instance.radius = 3f
         }
+    }
+
+    private fun defineFeatures() {
+        OS.isAndroid = true
+        OS.isWindows = false
+        OS.isLinux = false
+
+        OSFeatures.canSleep = true
+        OSFeatures.canHostServers = true
+        OSFeatures.hasMultiThreading = true
+        OSFeatures.supportsNetworkUDP = true // I think so
+        OSFeatures.supportsContinuousLogFiles = false // don't want that for now
+        OSFeatures.filesAreCaseSensitive = true // yes, Linux-like
+
+        GFXFeatures.isOpenGLES = true
+        GFXFeatures.canToggleVSync = false
+        GFXFeatures.canOpenNewWindows = false
+        GFXFeatures.hasWeakGPU = true
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -90,9 +111,7 @@ class MainActivity : AppCompatActivity(),
         val path = c.filesDir.path
         System.setProperty("user.home", path)
 
-        OS.isAndroid = true
-        OS.isWindows = false
-        OS.isLinux = false
+        defineFeatures()
 
         AndroidPlugin.onEnable()
 
@@ -132,7 +151,7 @@ class MainActivity : AppCompatActivity(),
         }
 
         EngineBase.instance = engine
-        EngineBase.showFPS = true
+        WindowRenderFlags.showFPS = true
         engine.setupNames()
         engine.tick("run")
         // GFX.onInit = engine::gameInit
@@ -147,8 +166,11 @@ class MainActivity : AppCompatActivity(),
         val configurationInfo = activityManager.deviceConfigurationInfo
         val version = configurationInfo.reqGlEsVersion
         val supportsEs2 = version >= 0x20000
+        val supportsEs32 = version >= 0x30002
         val major = version.shr(16)
         val minor = version.and(0xffff)
+
+        GFXFeatures.supportsTextureGather = supportsEs32
 
         GL11.setVersion(major, minor)
         LOGGER.info("OpenGL ES Version: $major.$minor")

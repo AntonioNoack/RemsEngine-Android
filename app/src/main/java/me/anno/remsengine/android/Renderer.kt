@@ -5,11 +5,10 @@ import android.opengl.GLES30.GL_MAX_SAMPLES
 import android.opengl.GLSurfaceView
 import me.anno.Time
 import me.anno.config.DefaultConfig
-import me.anno.engine.EngineBase
-import me.anno.engine.Events.addEvent
+import me.anno.engine.WindowRenderFlags
 import me.anno.gpu.GFX
 import me.anno.gpu.GFXState
-import me.anno.gpu.Logo.drawLogo
+import me.anno.gpu.Logo
 import me.anno.gpu.Logo.logoBackgroundColor
 import me.anno.gpu.RenderStep
 import me.anno.gpu.WindowManagement
@@ -50,13 +49,8 @@ class Renderer : GLSurfaceView.Renderer {
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         val window = GFX.someWindow
-        if (width != window.width || height != window.height) {
-            window.width = width
-            window.height = height
-            addEvent {
-                window.framesSinceLastInteraction = 0
-            }
-        }
+        window.width = width
+        window.height = height
     }
 
     private var frameIndex = 0
@@ -66,8 +60,6 @@ class Renderer : GLSurfaceView.Renderer {
         try {
             // neither true nor false work without issues
             DefaultConfig["ui.sparseRedraw"] = true
-            // frame isn't kept on Android :/
-            GFX.someWindow.needsRefresh = true
             logoBackgroundColor = 0xff99aaff.toInt()
             GFX.glThread = Thread.currentThread()
             val windowX = GFX.someWindow
@@ -89,13 +81,14 @@ class Renderer : GLSurfaceView.Renderer {
                         // to properly render onto multiple attachments
                         GFX.maxColorAttachments = 1
                     }
-                    drawLogo(windowX.width, windowX.height, false)
+                    Logo.drawLogo(windowX.width, windowX.height)
                 }
                 in 1 until numLogoFrames -> {
-                    drawLogo(windowX.width, windowX.height, false)
+                    Logo.drawLogo(windowX.width, windowX.height)
                 }
                 numLogoFrames -> {
-                    drawLogo(windowX.width, windowX.height, true)
+                    Logo.drawLogo(windowX.width, windowX.height)
+                    Logo.destroy()
                     KeyMap.defineKeys()
                     GFX.check()
                     WindowManagement.init2(null)
@@ -107,7 +100,7 @@ class Renderer : GLSurfaceView.Renderer {
                     Touch.updateAll()
                     GFX.activeWindow = windowX
                     RenderStep.renderStep(windowX, true)
-                    EngineBase.showFPS = true
+                    WindowRenderFlags.showFPS = true
                     // draw the cursor for debug purposes
                     DrawRectangles.drawRect(
                         windowX.mouseX.toInt(),
