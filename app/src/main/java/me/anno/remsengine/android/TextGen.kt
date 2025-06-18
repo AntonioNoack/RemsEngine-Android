@@ -20,10 +20,13 @@ import me.anno.gpu.texture.Texture2D
 import me.anno.gpu.texture.Texture2DArray
 import me.anno.maths.Maths
 import me.anno.remsengine.android.AndroidPlugin.getPaint
+import me.anno.utils.Color.convertARGB2ABGR
+import me.anno.utils.Color.convertARGB2RGBA
 import me.anno.utils.async.Callback
 import me.anno.utils.types.Floats.toIntOr
 import me.anno.utils.types.Strings.isBlank2
 import me.anno.utils.types.Strings.shorten
+import java.nio.ByteOrder
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -125,6 +128,12 @@ class TextGen(key: FontKey) : TextGenerator {
             pixels.copyInto(tmp, 0, i0, i0 + w) // tmp = y0
             pixels.copyInto(pixels, i0, i1, i1 + w) // y0 = y1
             tmp.copyInto(pixels, i1) // y1 = tmp
+        }
+
+        if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN) {
+            convertARGB2ABGR(pixels)
+        } else {
+            convertARGB2RGBA(pixels)
         }
 
         return pixels

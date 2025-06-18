@@ -4,9 +4,11 @@ import android.annotation.SuppressLint
 import android.opengl.GLSurfaceView
 import android.view.MotionEvent
 import me.anno.engine.Events.addEvent
+import me.anno.gpu.GFX
 import me.anno.input.Input
 import me.anno.input.Key
 import me.anno.input.Touch
+import me.anno.ui.input.InputPanel
 
 /**
  * Where the graphics are drawn onto; catches all events for later handling.
@@ -35,6 +37,13 @@ class SurfaceView(private val ctx: MainActivity) : GLSurfaceView(ctx) {
                 addEvent {
                     Touch.onTouchDown(pid, x, y)
                     if (isMouse) Input.onMousePress(ctx.osWindow, Key.BUTTON_LEFT)
+                    val window = GFX.someWindow.windowStack
+                    val inFocus0 = window.inFocus0
+                    val inFocusInput = inFocus0?.listOfHierarchy
+                        ?.firstOrNull { it is InputPanel<*> && it.value != Unit }
+                    if (inFocusInput is InputPanel<*>) {
+                        ctx.requestKeyboard(inFocus0, inFocusInput)
+                    }
                 }
             }
             MotionEvent.ACTION_MOVE -> {

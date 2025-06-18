@@ -7,8 +7,11 @@ import android.content.ContextWrapper
 import android.opengl.GLSurfaceView
 import android.opengl.GLSurfaceView.RENDERMODE_CONTINUOUSLY
 import android.os.Bundle
+import android.text.InputType
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GestureDetectorCompat
 import me.anno.Time
@@ -34,20 +37,33 @@ import me.anno.io.saveable.Saveable.Companion.registerCustomClass
 import me.anno.remsengine.android.KeyMap.keyCodeMapping
 import me.anno.remsengine.android.test.TestControls
 import me.anno.remsengine.android.test.TestRenderMode.testRenderMode
+import me.anno.ui.Panel
+import me.anno.ui.base.groups.PropertyTablePanel
+import me.anno.ui.base.text.TextPanel
 import me.anno.ui.debug.TestEngine
+import me.anno.ui.input.InputPanel
+import me.anno.ui.input.TextInput
+import me.anno.ui.input.TextInputML
+import me.anno.ui.input.components.PureTextInput
+import me.anno.ui.input.components.PureTextInputML
 import me.anno.utils.GFXFeatures
 import me.anno.utils.OS
 import me.anno.utils.OSFeatures
+import me.anno.utils.types.AnyToBool
+import me.anno.utils.types.AnyToDouble
+import me.anno.utils.types.AnyToFloat
+import me.anno.utils.types.AnyToInt
+import me.anno.utils.types.AnyToLong
+import me.anno.utils.types.Strings.isNotBlank2
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.opengl.GL11
+import java.math.BigDecimal
 import kotlin.test.assertTrue
 
 // todo create some small games to show our engine's capabilities
 //  - most 2d, because mobile
 //  - some easy 3d
 //  best just port them from our tests section
-
-// todo open keyboard when in text input
 
 class MainActivity : AppCompatActivity() {
 
@@ -187,6 +203,103 @@ class MainActivity : AppCompatActivity() {
         setContentView(glSurfaceView)
     }
 
+    private fun findTitle(panel0: Panel?): String {
+        var panel = panel0
+        while (panel != null) {
+
+            val placeholder = when (panel) {
+                is PureTextInput -> panel.placeholder
+                is PureTextInputML -> panel.placeholder
+                else -> ""
+            }
+            if (placeholder.isNotBlank2()) return placeholder
+
+            val tooltip = panel.tooltip
+            if (tooltip.isNotBlank2()) return tooltip
+
+            val parent = panel.uiParent
+            if (parent is PropertyTablePanel) {
+                val nameIndex = panel.indexInParent - 1
+                val namePanel = parent.children.getOrNull(nameIndex)
+                if (namePanel is TextPanel) {
+                    val name = namePanel.text
+                    if (name.isNotBlank2()) {
+                        return name
+                    }
+                }
+            }
+
+            panel = parent
+        }
+        return "Enter Value"
+    }
+
+    private var lastDialog: AlertDialog? = null
+    fun requestKeyboard(inFocus0: Panel, panel: InputPanel<*>) {
+        val oldValue = panel.value
+        val title = findTitle(inFocus0)
+
+        runOnUiThread {
+            lastDialog?.dismiss()
+            lastDialog = null
+
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle(title)
+
+            // Set up the input
+            val input = EditText(this)
+            input.inputType = when (oldValue) {
+                is Float, is Double, is BigDecimal -> InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+                is Number -> InputType.TYPE_CLASS_NUMBER
+                else -> InputType.TYPE_CLASS_TEXT
+            }
+            input.setText(oldValue.toString())
+
+            builder.setView(input)
+            // Set up the buttons
+            builder.setPositiveButton("OK") { dialog, _ ->
+                val newValue = input.text.toString()
+                addEvent { updateValue(panel, oldValue, newValue) }
+                dialog.dismiss()
+            }
+            builder.setNegativeButton("Cancel") { dialog, _ ->
+                dialog.cancel()
+            }
+            builder.setOnDismissListener {
+                lastDialog = null
+            }
+            builder.setOnCancelListener {
+                lastDialog = null
+            }
+            lastDialog = builder.show()
+        }
+    }
+
+    private fun updateValue(panel: InputPanel<*>, oldValue: Any?, newValue: String) {
+        @Suppress("UNCHECKED_CAST")
+        when (oldValue) {
+            is String ->
+                (panel as InputPanel<String>).setValue(newValue, true)
+            is Double ->
+                (panel as InputPanel<Double>).setValue(AnyToDouble.getDouble(newValue), true)
+            is Float ->
+                (panel as InputPanel<Float>).setValue(AnyToFloat.getFloat(newValue), true)
+            is Long ->
+                (panel as InputPanel<Long>).setValue(AnyToLong.getLong(newValue), true)
+            is Int ->
+                (panel as InputPanel<Int>).setValue(AnyToInt.getInt(newValue), true)
+            is Boolean ->
+                (panel as InputPanel<Boolean>).setValue(AnyToBool.anyToBool(newValue), true)
+            else -> LOGGER.warn("Unknown/unsupported value type ${oldValue?.javaClass}")
+        }
+        when (panel) {
+            is TextInput -> panel.setCursorToEnd()
+            is TextInputML -> panel.setCursorToEnd()
+            is PureTextInput -> panel.setCursorToEnd()
+            is PureTextInputML -> panel.setCursorToEnd()
+        }
+    }
+
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         println("Key-down: $keyCode -> ${keyCodeMapping[keyCode]}")
         val key = keyCodeMapping[keyCode]
@@ -206,6 +319,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onGenericMotionEvent(event: MotionEvent): Boolean {
+        // joystick, controller, ...
         println("generic motion event")
         return super.onGenericMotionEvent(event)
     }
