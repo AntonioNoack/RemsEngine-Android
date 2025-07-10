@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.text.InputType
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.view.View
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -17,6 +18,7 @@ import androidx.core.view.GestureDetectorCompat
 import me.anno.Time
 import me.anno.config.DefaultConfig.style
 import me.anno.ecs.Entity
+import me.anno.ecs.components.audio.AudioComponent
 import me.anno.ecs.components.light.sky.SkyboxBase
 import me.anno.ecs.components.mesh.MeshComponent
 import me.anno.engine.DefaultAssets
@@ -27,12 +29,13 @@ import me.anno.engine.ui.render.PlayMode
 import me.anno.engine.ui.render.RenderMode
 import me.anno.engine.ui.render.RenderView0
 import me.anno.engine.ui.render.SceneView
-import me.anno.engine.ui.render.SceneView.Companion.testScene
+import me.anno.engine.ui.render.SceneView.Companion.createSceneUI
 import me.anno.engine.ui.scenetabs.ECSSceneTab
 import me.anno.engine.ui.scenetabs.ECSSceneTabs
 import me.anno.gpu.GFX
 import me.anno.gpu.GPUTasks
 import me.anno.input.Input
+import me.anno.io.files.Reference.getReference
 import me.anno.io.saveable.Saveable.Companion.registerCustomClass
 import me.anno.remsengine.android.KeyMap.keyCodeMapping
 import me.anno.remsengine.android.test.TestControls
@@ -55,9 +58,11 @@ import me.anno.utils.types.AnyToFloat
 import me.anno.utils.types.AnyToInt
 import me.anno.utils.types.AnyToLong
 import me.anno.utils.types.Strings.isNotBlank2
+import me.anno.video.VideoPlayComponent
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.opengl.GL11
 import java.math.BigDecimal
+import kotlin.math.min
 import kotlin.test.assertTrue
 
 // todo create some small games to show our engine's capabilities
@@ -106,6 +111,14 @@ class MainActivity : AppCompatActivity() {
         scene.add(SkyboxBase())
         // scene.add(MeshComponent(IcosahedronModel.createIcosphere(4)))
         scene.add(MeshComponent(DefaultAssets.icoSphere))
+        scene.add(VideoPlayComponent.create(this, "treemiddle.mp4"))
+
+        // add audio-playing component
+        scene.add(AudioComponent().apply {
+            source = getReference("res://sounds/Lovely.mp3")
+            autoStart = true
+        })
+
         scene.add(TestControls())
 
         val renderMode = if (true) {
@@ -113,7 +126,7 @@ class MainActivity : AppCompatActivity() {
         } else RenderMode.SIMPLE
         return TestEngine("Rem's Engine") {
             val p = if (true) {
-                testScene(scene) {
+                createSceneUI(scene) {
                     it.renderView.renderMode = renderMode
                 }
             } else {
@@ -143,12 +156,25 @@ class MainActivity : AppCompatActivity() {
         LOGGER.info("s2: $src2, ${src2.exists}, ${src2.mkdirs()}")
     }
 
+    private fun makeFullscreen() {
+        // hide top bar
+        supportActionBar?.hide()
+        // required to get rid of clock in emulator
+        window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_FULLSCREEN
+                )
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // hide top bar
-        supportActionBar?.hide()
+        makeFullscreen()
 
         defineHome()
         defineFeatures()
@@ -180,19 +206,19 @@ class MainActivity : AppCompatActivity() {
         val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         val configurationInfo = activityManager.deviceConfigurationInfo
         val version = configurationInfo.reqGlEsVersion
-        val supportsEs20 = version >= 0x20000
-        val supportsEs32 = version >= 0x30002
         val major = version.shr(16)
         val minor = version.and(0xffff)
 
-        GFXFeatures.supportsTextureGather = supportsEs32
+        val version10x = major * 10 + min(minor, 9)
+        GFXFeatures.supportsShaderStorageBuffers = version10x >= 31
+        GFXFeatures.supportsTextureGather = version10x >= 32
 
         GL11.setVersion(major, minor)
         LOGGER.info("OpenGL ES Version: $major.$minor")
 
         // guaranteed since Android 2.2 (API level 8), aka 2010;
         // we also define it in the AndroidManifest, so this should be a given
-        assertTrue(supportsEs20, "Must support OpenGL ES 2.0")
+        assertTrue(version10x >= 20, "Must support OpenGL ES 2.0")
 
         val glSurfaceView = SurfaceView(this)
         this.glSurfaceView = glSurfaceView

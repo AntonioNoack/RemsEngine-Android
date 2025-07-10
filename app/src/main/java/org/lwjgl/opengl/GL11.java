@@ -30,6 +30,8 @@ import static android.opengl.GLES20.GL_VERTEX_SHADER;
 import static android.opengl.GLES30.GL_MAX_SAMPLES;
 import static android.opengl.GLES30.GL_QUERY_RESULT_AVAILABLE;
 import static android.opengl.GLES30.GL_RGB8;
+import static android.opengl.GLES30.GL_TRANSFORM_FEEDBACK_BUFFER;
+import static android.opengl.GLES30.GL_UNIFORM_BUFFER;
 import static android.opengl.GLES31.GL_TEXTURE_2D_MULTISAMPLE;
 import static org.lwjgl.opengl.GLStrings.getAttachment;
 import static org.lwjgl.opengl.GLStrings.getBufferTarget;
@@ -287,6 +289,12 @@ public class GL11 {
 
     public static void glBindBufferBase(int target, int slot, int pointer) {
         check();
+        if (version10x < 31) {
+            if (target != GL_TRANSFORM_FEEDBACK_BUFFER && target != GL_UNIFORM_BUFFER) {
+                System.err.println("glBindBufferBase cannot bind target " + target + " before OpenGL ES 3.1!");
+                target = GL_UNIFORM_BUFFER;
+            }
+        }
         if (print)
             System.out.println("glBindBufferBase(" + getBufferTarget(target) + ", " + slot + ")");
         GLES30.glBindBufferBase(target, slot, pointer);

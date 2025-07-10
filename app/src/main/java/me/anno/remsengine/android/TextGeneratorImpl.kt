@@ -5,7 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import androidx.core.graphics.createBitmap
 import me.anno.fonts.Font
-import me.anno.fonts.FontManager.getAvgFontSize
+import me.anno.fonts.LineSplitter
 import me.anno.fonts.TextGenerator
 import me.anno.fonts.TextGroup
 import me.anno.fonts.keys.FontKey
@@ -31,21 +31,38 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-class TextGen(key: FontKey) : TextGenerator {
+class TextGeneratorImpl(override val fontKey: FontKey) :
+    LineSplitter<TextGeneratorImpl>(), TextGenerator {
 
-    private val font = Font(key.name, getAvgFontSize(key.sizeIndex), key.bold, key.italic)
+    private val font = fontKey.toFont()
     private val metrics = getPaint(font).fontMetrics
 
     // top, bottom: -29.507143, 7.571181
     private val height = (metrics.bottom - metrics.top).toIntOr()
 
-    override fun getBaselineY(): Float {
-        return -metrics.top
+    override fun getBaselineY(): Float = -metrics.top
+    override fun getLineHeight(): Float = height.toFloat()
+
+    override fun getExampleAdvance(): Float {
+        return exampleAdvanceLazy.value.toFloat()
     }
 
-    override fun getLineHeight(): Float {
-        return height.toFloat()
+    private val exampleAdvanceLazy = lazy {
+        getStringWidth(createGroup(font, "o"))
     }
+
+    override fun getAdvance(text: CharSequence, font: TextGeneratorImpl): Float {
+        return getStringWidth(createGroup(font.font, text)).toFloat()
+    }
+
+    // todo do we have/need that?
+    override fun getFallbackFonts(size: Float): List<TextGeneratorImpl> = emptyList()
+
+    override fun getSupportLevel(
+        fonts: List<TextGeneratorImpl>, char: Int, lastSupportLevel: Int
+    ): Int = 0
+
+    override fun getSelfFont(): TextGeneratorImpl = this
 
     private fun getStringWidth(group: TextGroup) = group.offsets.last() - group.offsets.first()
     private fun createGroup(font: Font, text: CharSequence): TextGroup = TextGroup(font, text, 0.0)

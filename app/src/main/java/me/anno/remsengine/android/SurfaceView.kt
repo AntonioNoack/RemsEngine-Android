@@ -8,6 +8,8 @@ import me.anno.gpu.GFX
 import me.anno.input.Input
 import me.anno.input.Key
 import me.anno.input.Touch
+import me.anno.ui.input.ColorInput
+import me.anno.ui.input.EnumInput
 import me.anno.ui.input.InputPanel
 
 /**
@@ -40,7 +42,13 @@ class SurfaceView(private val ctx: MainActivity) : GLSurfaceView(ctx) {
                     val window = GFX.someWindow.windowStack
                     val inFocus0 = window.inFocus0
                     val inFocusInput = inFocus0?.listOfHierarchy
-                        ?.firstOrNull { it is InputPanel<*> && it.value != Unit }
+                        ?.firstOrNull {
+                            it is InputPanel<*> &&
+                                    it.value != Unit && // button
+                                    it.value !is Boolean && // checkbox
+                                    it !is EnumInput && // handled via drop-down
+                                    it !is ColorInput // handled via custom color picker
+                        }
                     if (inFocusInput is InputPanel<*>) {
                         ctx.requestKeyboard(inFocus0, inFocusInput)
                     }

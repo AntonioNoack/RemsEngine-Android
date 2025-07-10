@@ -65,7 +65,7 @@ object AndroidPlugin : Plugin() {
             clamp(max(dm.widthPixels, dm.heightPixels) / 70, 15, 60)
         }
         FontStats.queryInstalledFontsImpl = ::getFonts
-        FontStats.getTextGeneratorImpl = { key -> TextGen(key) }
+        FontStats.getTextGeneratorImpl = { key -> TextGeneratorImpl(key) }
         FontStats.getTextLengthImpl = { font, text ->
             val paint = getPaint(font)
             val rect = Rect()
