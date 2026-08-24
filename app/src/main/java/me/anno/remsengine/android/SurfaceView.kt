@@ -3,6 +3,7 @@ package me.anno.remsengine.android
 import android.annotation.SuppressLint
 import android.opengl.GLSurfaceView
 import android.view.MotionEvent
+import me.anno.Time
 import me.anno.engine.Events.addEvent
 import me.anno.gpu.GFX
 import me.anno.input.Input
@@ -38,7 +39,7 @@ class SurfaceView(private val ctx: MainActivity) : GLSurfaceView(ctx) {
             MotionEvent.ACTION_POINTER_DOWN -> {
                 addEvent {
                     Touch.onTouchDown(pid, x, y)
-                    if (isMouse) Input.onMousePress(ctx.osWindow, Key.BUTTON_LEFT)
+                    if (isMouse) Input.onMouseDown(ctx.osWindow, Key.BUTTON_LEFT, Time.nanoTime)
                     val window = GFX.someWindow.windowStack
                     val inFocus0 = window.inFocus0
                     val inFocusInput = inFocus0?.listOfHierarchy
@@ -73,7 +74,7 @@ class SurfaceView(private val ctx: MainActivity) : GLSurfaceView(ctx) {
             MotionEvent.ACTION_POINTER_UP -> {
                 addEvent {
                     Touch.onTouchUp(pid, x, y)
-                    if (isMouse) Input.onMouseRelease(ctx.osWindow, Key.BUTTON_LEFT)
+                    if (isMouse) Input.onMouseUp(ctx.osWindow, Key.BUTTON_LEFT, Time.nanoTime)
                     // update mouse position, when the gesture is finished (no more touches down)?
                 }
             }

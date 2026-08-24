@@ -2,6 +2,7 @@ package me.anno.remsengine.android
 
 import android.view.GestureDetector
 import android.view.MotionEvent
+import me.anno.Time
 import me.anno.engine.Events.addEvent
 import me.anno.gpu.GFX
 import me.anno.input.Input
@@ -43,8 +44,9 @@ class GestureHandler : GestureDetector.OnGestureListener, GestureDetector.OnDoub
     override fun onLongPress(e: MotionEvent) {
         addEvent {
             val osWindow = GFX.someWindow
-            Input.onMousePress(osWindow, Key.BUTTON_RIGHT)
-            Input.onMouseRelease(osWindow, Key.BUTTON_RIGHT)
+            val nanoTime = Time.nanoTime
+            Input.onMouseDown(osWindow, Key.BUTTON_RIGHT, nanoTime)
+            Input.onMouseUp(osWindow, Key.BUTTON_RIGHT, nanoTime)
             LOGGER.info("Long Press")
         }
     }

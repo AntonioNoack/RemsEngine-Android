@@ -13,7 +13,6 @@ import me.anno.gpu.Logo.logoBackgroundColor
 import me.anno.gpu.RenderStep
 import me.anno.gpu.RenderStep.renderStep
 import me.anno.gpu.WindowManagement
-import me.anno.gpu.drawing.DrawRectangles
 import me.anno.remsengine.android.MainActivity.Companion.setStatic
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.opengl.GL

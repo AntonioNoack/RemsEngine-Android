@@ -100,6 +100,9 @@ class MainActivity : AppCompatActivity() {
         GFXFeatures.canToggleVSync = false
         GFXFeatures.canOpenNewWindows = false
         GFXFeatures.hasWeakGPU = true
+
+        // not supported in Logcat
+        LogManager.enableColors = false
     }
 
     private fun createEngineInstance(): EngineBase {
@@ -315,7 +318,7 @@ class MainActivity : AppCompatActivity() {
             is Int ->
                 (panel as InputPanel<Int>).setValue(AnyToInt.getInt(newValue), true)
             is Boolean ->
-                (panel as InputPanel<Boolean>).setValue(AnyToBool.anyToBool(newValue), true)
+                (panel as InputPanel<Boolean>).setValue(AnyToBool.getBool(newValue), true)
             else -> LOGGER.warn("Unknown/unsupported value type ${oldValue?.javaClass}")
         }
         when (panel) {
@@ -330,8 +333,8 @@ class MainActivity : AppCompatActivity() {
         println("Key-down: $keyCode -> ${keyCodeMapping[keyCode]}")
         val key = keyCodeMapping[keyCode]
         if (key != null) {
-            val time = Time.nanoTime
-            addEvent { Input.onKeyPressed(osWindow, key, time) }
+            val nanoTime = Time.nanoTime
+            addEvent { Input.onKeyDown(osWindow, key, nanoTime) }
         }
         return true
     }
@@ -339,7 +342,7 @@ class MainActivity : AppCompatActivity() {
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
         val key = keyCodeMapping[keyCode]
         if (key != null) {
-            addEvent { Input.onKeyReleased(osWindow, key) }
+            addEvent { Input.onKeyUp(osWindow, key) }
         }
         return true
     }

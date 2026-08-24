@@ -240,6 +240,19 @@ public class GL11 {
         return tmpInt1[0];
     }
 
+    public static void glGetIntegeri_v(int type, int index, int[] data) {
+        int offset = 0;
+        if (version10x < 30) {
+            // only used for work-groups GL_MAX_COMPUTE_WORK_GROUP_COUNT
+            data[offset] = 0;
+        } else {
+            check();
+            GLES30.glGetIntegeri_v(type, index, data, offset);
+            if (print) System.out.println("glGetIntegeri_v(" + type + ", " + index + ")");
+            check();
+        }
+    }
+
     public static int glGetError() {
         return ignoreErrors ? 0 : GLES11.glGetError();
     }
@@ -576,6 +589,13 @@ public class GL11 {
         check();
     }
 
+    public static void glCopyTexSubImage2D(int target, int level, int xoffset, int yoffset, int x, int y, int w, int h) {
+        check();
+        target = mapTextureTarget(target);
+        GLES20.glCopyTexSubImage2D(target, level, xoffset, yoffset, x, y, w, h);
+        check();
+    }
+
     public static void glTexImage3D(int target, int level, int internalFormat, int width, int height, int depth, int border, int format, int type, ByteBuffer buffer) {
 
         if (print)
@@ -831,6 +851,11 @@ public class GL11 {
         return tmpInt1[0];
     }
 
+    public static int glGetShaderi(int shader, int key) {
+        GLES20.glGetShaderiv(shader, key, tmpInt1, 0);
+        return tmpInt1[0];
+    }
+
     public static void glDeleteProgram(int program) {
         GLES20.glDeleteProgram(program);
     }
@@ -1073,6 +1098,25 @@ public class GL11 {
             GLES20.glVertexAttribPointer(index, size, type, normalized, stride, (int) offset);
         if (print)
             System.out.println("glVertexAttribPointer(" + index + ", " + size + ", " + getType(type) + ", " + normalized + ", " + stride + ", " + offset + ")");
+        check();
+    }
+
+    public static void glVertexAttribIPointer(int index, int size, int type, int stride, long offset) {
+        check();
+
+        if (!disableVertexAttribs) {
+            if (version10x >= 30)
+                GLES30.glVertexAttribIPointer(index, size, type, stride, (int) offset);
+            else GLES20.glVertexAttribPointer(index, size, type, false, stride, (int) offset);
+        }
+        if (print)
+            System.out.println("glVertexAttribIPointer(" + index + ", " + size + ", " + getType(type) + ", " + stride + ", " + offset + ")");
+        check();
+    }
+
+    public static void glBufferStorage(int target, long size, int usage) {
+        check();
+        GLES20.glBufferData(target, (int) size, null, usage);
         check();
     }
 
@@ -1545,6 +1589,28 @@ public class GL11 {
             GLES30.glGetQueryObjectuiv(id, type, tmpInt1, 0);
             return tmpInt1[0];
         } else return 0;
+    }
+
+    public static void glDispatchCompute(int numGroupsX, int numGroupsY, int numGroupsZ) {
+        if (version10x >= 31) {
+            check();
+            GLES31.glDispatchCompute(numGroupsX, numGroupsY, numGroupsZ);
+            check();
+        } else {
+            // compute not supported
+            throw new IllegalStateException("Compute Shader not supported");
+        }
+    }
+
+    public static void glMemoryBarrier(int flags) {
+        if (version10x >= 31) {
+            check();
+            GLES31.glMemoryBarrier(flags);
+            check();
+        } else {
+            // compute not supported
+            throw new IllegalStateException("Compute Shader not supported");
+        }
     }
 
 }

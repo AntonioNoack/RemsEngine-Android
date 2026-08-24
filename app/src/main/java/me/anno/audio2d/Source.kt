@@ -4,8 +4,8 @@ import me.anno.Time
 import me.anno.audio2d.spatial.BiquadFilter
 import me.anno.audio2d.spatial.DistanceModel
 import me.anno.maths.Maths.SECONDS_TO_NANOS
-import me.anno.maths.Maths.max
 import me.anno.maths.Maths.mix
+import me.anno.maths.MinMax.max
 import me.anno.utils.algorithms.ForLoop.forLoopSafely
 import org.joml.Vector3f
 

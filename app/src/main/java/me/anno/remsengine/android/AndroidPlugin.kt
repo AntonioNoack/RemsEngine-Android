@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
 import android.graphics.BitmapFactory
 import android.graphics.Paint
-import android.graphics.Rect
 import android.graphics.Typeface
 import android.os.Build
 import androidx.core.math.MathUtils.clamp
@@ -13,6 +12,7 @@ import me.anno.extensions.plugins.Plugin
 import me.anno.fonts.Font
 import me.anno.fonts.FontStats
 import me.anno.fonts.signeddistfields.Contour
+import me.anno.fonts.signeddistfields.Contours
 import me.anno.fonts.signeddistfields.edges.LinearSegment
 import me.anno.image.Image
 import me.anno.image.ImageCache
@@ -22,6 +22,7 @@ import me.anno.image.raw.IntImage
 import me.anno.io.MediaMetadata
 import me.anno.maths.geometry.MarchingSquares
 import me.anno.utils.types.Booleans.toInt
+import me.anno.utils.types.Strings.joinChars
 import org.joml.AABBf
 import org.joml.Vector2f
 import java.io.File
@@ -65,25 +66,17 @@ object AndroidPlugin : Plugin() {
             clamp(max(dm.widthPixels, dm.heightPixels) / 70, 15, 60)
         }
         FontStats.queryInstalledFontsImpl = ::getFonts
-        FontStats.getTextGeneratorImpl = { key -> TextGeneratorImpl(key) }
-        FontStats.getTextLengthImpl = { font, text ->
-            val paint = getPaint(font)
-            val rect = Rect()
-            paint.getTextBounds(text, 0, text.length, rect)
-            rect.right.toDouble()
-        }
-        /*FontStats.getFontHeightImpl = { font ->
-            val metrics = getPaint(font).fontMetrics
-            // top, bottom: -29.507143, 7.571181
-            (metrics.bottom - metrics.top).toDouble()
-        }*/
-        Contour.calculateContoursImpl = { font, text ->
-            val pixels = TextToPixels.createPixels(getPaint(font), text.toString())
-            if (pixels != null) MarchingSquares.march(
-                pixels.w, pixels.h, pixels.values, 127.5f,
-                AABBf(0f, 0f, 0f, (pixels.w - 1).toFloat(), (pixels.h - 1).toFloat(), 0f)
-            ).map(::createContour) else emptyList()
-        }
+        FontStats.getTextGeneratorImpl = ::TextGeneratorImpl
+        Contour.calculateContoursImpl = ::createContours
+    }
+
+    private fun createContours(font: Font, codepoint: Int): Contours {
+        val pixels = TextToPixels.createPixels(getPaint(font), codepoint.joinChars())
+        val contours = if (pixels != null) MarchingSquares.march(
+            pixels.w, pixels.h, pixels.values, 127.5f,
+            AABBf(0f, 0f, 0f, (pixels.w - 1).toFloat(), (pixels.h - 1).toFloat(), 0f)
+        ).map(::createContour) else emptyList()
+        return Contours(contours, false) // todo do we need an inside-check?
     }
 
     private fun createContour(pts: List<Vector2f>): Contour {
@@ -94,7 +87,7 @@ object AndroidPlugin : Plugin() {
             segments.add(LinearSegment(prev, curr))
             prev = curr
         }
-        return Contour(segments)
+        return Contour(segments, 0f, -1)
     }
 
     fun getPaint(font: Font): Paint {

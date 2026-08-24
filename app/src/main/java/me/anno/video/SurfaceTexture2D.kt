@@ -29,7 +29,7 @@ class SurfaceTexture2D : ITexture2D {
     private var session = 0
     var pointer = -1
 
-    override val channels: Int
+    override val numChannels: Int
         get() = 3
 
     override val clamping: Clamping
