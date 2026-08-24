@@ -1120,6 +1120,31 @@ public class GL11 {
         check();
     }
 
+    public static void glGetBufferSubData(int target, long offset, int[] values) {
+        check();
+        if (version10x >= 30) {
+            ByteBuffer mapped = (ByteBuffer) GLES30.glMapBufferRange(
+                    target,
+                    (int) offset,
+                    values.length * 4,
+                    GLES30.GL_MAP_READ_BIT
+            );
+
+            if (mapped != null) {
+                mapped.order(ByteOrder.nativeOrder());
+
+                // Read data from mapped
+                IntBuffer intBuffer = mapped.asIntBuffer();
+                intBuffer.get(values);
+            }
+
+            GLES30.glUnmapBuffer(target);
+        } else {
+            throw new IllegalStateException("Readback from buffer would need rendering to framebuffer");
+        }
+        check();
+    }
+
     public static void glVertexAttribDivisor(int index, int divisor) {
         check();
         if (!disableVertexAttribs) GLES30.glVertexAttribDivisor(index, divisor);
