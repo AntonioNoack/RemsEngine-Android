@@ -10,9 +10,10 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.RemsEngine">
+        android:theme="@style/Theme.RemsEngine"
+        android:largeHeap="true">
         <activity
-            android:name=".android.MainActivity"
+            android:name="me.anno.remsengine.android.MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true">
             <intent-filter>

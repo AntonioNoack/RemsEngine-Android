@@ -21,12 +21,14 @@ import static android.opengl.GLES20.GL_ARRAY_BUFFER;
 import static android.opengl.GLES20.GL_COLOR_ATTACHMENT0;
 import static android.opengl.GLES20.GL_DEPTH_COMPONENT;
 import static android.opengl.GLES20.GL_DEPTH_COMPONENT16;
+import static android.opengl.GLES20.GL_FRAMEBUFFER;
 import static android.opengl.GLES20.GL_LESS;
 import static android.opengl.GLES20.GL_LINES;
 import static android.opengl.GLES20.GL_TEXTURE_2D;
 import static android.opengl.GLES20.GL_UNSIGNED_INT;
 import static android.opengl.GLES20.GL_VALIDATE_STATUS;
 import static android.opengl.GLES20.GL_VERTEX_SHADER;
+import static android.opengl.GLES20.glGetShaderiv;
 import static android.opengl.GLES30.GL_MAX_SAMPLES;
 import static android.opengl.GLES30.GL_QUERY_RESULT_AVAILABLE;
 import static android.opengl.GLES30.GL_RGB8;
@@ -64,6 +66,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import kotlin.NotImplementedError;
 import me.anno.gpu.GLNames;
 import me.anno.gpu.texture.Texture2D;
 import me.anno.utils.pooling.Pools;
@@ -153,8 +156,8 @@ public class GL11 {
                     "#version " + version + " es\n" +
                     "void main(){ gl_Position = vec4(1.0); }");
             GLES20.glCompileShader(shader);
-            String log = glGetShaderInfoLog(shader);
-            if (log == null || log.trim().isEmpty()) {
+            glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, tmpInt1, 0);
+            if (tmpInt1[0] != GLES20.GL_FALSE) {
                 maxVersion = version;
             }
             GLES20.glDeleteShader(shader);
@@ -302,7 +305,7 @@ public class GL11 {
 
     public static void glBindBufferBase(int target, int slot, int pointer) {
         check();
-        if (version10x < 31) {
+        if (version10x < 30) {
             if (target != GL_TRANSFORM_FEEDBACK_BUFFER && target != GL_UNIFORM_BUFFER) {
                 System.err.println("glBindBufferBase cannot bind target " + target + " before OpenGL ES 3.1!");
                 target = GL_UNIFORM_BUFFER;
@@ -361,13 +364,14 @@ public class GL11 {
 
         target = mapTextureTarget(target);
 
-        if (format == GL_DEPTH_COMPONENT && !hasExtension("OES_depth_texture")) {
+        if (format == GL_DEPTH_COMPONENT && version10x < 30 && !hasExtension("OES_depth_texture")) {
             new RuntimeException("Depth textures are not supported! (creating rgba texture instead)")
                     .printStackTrace();
             GLES11.glTexImage2D(target, level, GLES20.GL_RGBA, width, height, border,
                     GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, (ByteBuffer) null);
             return;
         }
+
         if (buffer == null || buffer.remaining() == 0) {
             glTexImage2D(target, level, internalFormat, width, height, border, format, type, 0L);
         } else {
@@ -494,7 +498,7 @@ public class GL11 {
         check();
         target = mapTextureTarget(target);
         if (!disableTextures) GLES20.glTexSubImage2D(target, level, x, y, w, h, format, type, data);
-        if (print || glGetError() != 0)
+        if (print)
             System.out.println("glTexSubImage2D(" + getTextureTarget(target) + ", level " + level + ", " + x +
                     ", " + y + ", " + w + ", " + h + ", " + getFormat(format) +
                     ", " + getType(type) + ", " + data + ")");
@@ -505,7 +509,7 @@ public class GL11 {
         check();
         target = mapTextureTarget(target);
         if (!disableTextures) GLES20.glTexSubImage2D(target, level, x, y, w, h, format, type, data);
-        if (print || glGetError() != 0)
+        if (print)
             System.out.println("glTexSubImage2D(" + getTextureTarget(target) + ", level " + level + ", " + x +
                     ", " + y + ", " + w + ", " + h + ", " + getFormat(format) +
                     ", " + getType(type) + ", " + data + ")");
@@ -516,7 +520,7 @@ public class GL11 {
         check();
         target = mapTextureTarget(target);
         if (!disableTextures) GLES20.glTexSubImage2D(target, level, x, y, w, h, format, type, data);
-        if (print || glGetError() != 0)
+        if (print)
             System.out.println("glTexSubImage2D(" + getTextureTarget(target) + ", level " + level + ", " + x +
                     ", " + y + ", " + w + ", " + h + ", " + getFormat(format) +
                     ", " + getType(type) + ", " + data + ")");
@@ -524,6 +528,7 @@ public class GL11 {
     }
 
     public static void glTexImage3D(int target, int level, int internalFormat, int width, int height, int depth, int border, int format, int type, int[] data) {
+        if (version10x < 30) throw new IllegalStateException("glTexImage3D is not supported");
 
         if (print)
             System.out.println("glTexImage3D(" + getTextureTarget(target) + ", level " + level +
@@ -597,6 +602,7 @@ public class GL11 {
     }
 
     public static void glTexImage3D(int target, int level, int internalFormat, int width, int height, int depth, int border, int format, int type, ByteBuffer buffer) {
+        if (version10x < 30) throw new IllegalStateException("glTexImage3D is not supported");
 
         if (print)
             System.out.println("glTexImage2D(" + getTextureTarget(target) + ", level " + level +
@@ -611,7 +617,8 @@ public class GL11 {
                     getType(type));
         }
 
-        if (format == GL_DEPTH_COMPONENT && !hasExtension("OES_depth_texture")) {
+        // depth would always be supported...
+        if (format == GL_DEPTH_COMPONENT && version10x < 30 && !hasExtension("OES_depth_texture")) {
             new RuntimeException("Depth textures are not supported! (creating rgba texture instead)")
                     .printStackTrace();
             GLES30.glTexImage3D(target, level, GLES20.GL_RGBA, width, height, depth, border,
@@ -660,7 +667,7 @@ public class GL11 {
         if (print) System.out.println("glTexParameteriv(" + getTextureTarget(target) + ", " +
                 getTexKey(key) + ", " + Arrays.toString(values) + ")");
         if (key == GL_TEXTURE_SWIZZLE_RGBA && version10x <= 32) {
-            // only supported in OpenGL ES 3.3
+            // only supported in OpenGL ES 3.2
             return;
         }
         check();
@@ -738,7 +745,7 @@ public class GL11 {
     private static void determineDrawBuffers() {
         if (supportsDrawBuffers == null) {
             supportsDrawBuffers = version10x >= 30 || hasExtension("GL_EXT_draw_buffers");
-            if (supportsDrawBuffers == Boolean.TRUE) {
+            if (supportsDrawBuffers) {
                 GLES30.glGetIntegerv(GLES30.GL_MAX_DRAW_BUFFERS, tmpInt1, 0);
                 maxDrawBuffers = tmpInt1[0];
                 System.out.println("MaxDrawBuffers: " + maxDrawBuffers);
@@ -780,7 +787,10 @@ public class GL11 {
             if (buffers.length > maxDrawBuffers)
                 throw new IllegalArgumentException("buffers.length > " + maxDrawBuffers);
             if (print) System.out.println("glDrawBuffers(" + Arrays.toString(buffers) + ")");
-            if (!disableDrawing) GLES30.glDrawBuffers(buffers.length, buffers, 0);
+            if (!disableDrawing) {
+                if (version10x >= 30) GLES30.glDrawBuffers(buffers.length, buffers, 0);
+                else throw new NotImplementedError("TODO: Call extension for glDrawBuffers");
+            }
             check();
         }
     }
@@ -793,7 +803,7 @@ public class GL11 {
 
     public static boolean hasExtension(final String ext) {
         if (extensions == null) {
-            String[] ext1 = GLES20.glGetString(GLES20.GL_EXTENSIONS).split("\\R");
+            String[] ext1 = GLES20.glGetString(GLES20.GL_EXTENSIONS).split("\\s+");
             extensions = new HashSet<>(ext1.length);
             extensions.addAll(Arrays.asList(ext1));
         }
@@ -831,8 +841,10 @@ public class GL11 {
     }
 
     public static void glDeleteFramebuffers(int framebuffer) {
-        if (boundFramebuffer == framebuffer)
-            throw new RuntimeException("Cannot delete a bound framebuffer");
+        if (boundFramebuffer == framebuffer) {// should not happen
+            GLES20.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
+
         tmpInt1[0] = framebuffer;
         check();
         GLES20.glDeleteFramebuffers(1, tmpInt1, 0);
@@ -922,8 +934,8 @@ public class GL11 {
         return GLES20.glGetShaderInfoLog(shader);
     }
 
-    public static String glGetProgramInfoLog(int shader) {
-        return GLES20.glGetProgramInfoLog(shader);
+    public static String glGetProgramInfoLog(int program) {
+        return GLES20.glGetProgramInfoLog(program);
     }
 
     public static void glLinkProgram(int program) {
@@ -940,7 +952,7 @@ public class GL11 {
     public static void glUseProgram(int program) {
         check();
         GLES20.glUseProgram(program);
-        if (print) System.out.println("glUseProgram(" + program + ")");
+        // if (print) System.out.println("glUseProgram(" + program + ")");
         boundProgram = program;
         check();
     }
@@ -1066,6 +1078,9 @@ public class GL11 {
     }
 
     public static void glUniformMatrix4fv(int uniform, boolean rowMajor, FloatBuffer buffer) {
+        if (rowMajor)
+            throw new IllegalStateException("OpenGL ES does not support rowMajor");
+
         check();
         GLES20.glUniformMatrix4fv(uniform, buffer.remaining() / 16, rowMajor, buffer);
         if (print)
@@ -1105,18 +1120,19 @@ public class GL11 {
         check();
 
         if (!disableVertexAttribs) {
-            if (version10x >= 30)
+            if (version10x >= 30) {
                 GLES30.glVertexAttribIPointer(index, size, type, stride, (int) offset);
-            else GLES20.glVertexAttribPointer(index, size, type, false, stride, (int) offset);
+            } else throw new IllegalStateException("glVertexAttribIPointer is not supported");
         }
+
         if (print)
             System.out.println("glVertexAttribIPointer(" + index + ", " + size + ", " + getType(type) + ", " + stride + ", " + offset + ")");
         check();
     }
 
-    public static void glBufferStorage(int target, long size, int usage) {
+    public static void glBufferStorage(int target, long size, int usageFlags) {
         check();
-        GLES20.glBufferData(target, (int) size, null, usage);
+        GLES20.glBufferData(target, (int) size, null, GLES20.GL_DYNAMIC_DRAW);
         check();
     }
 
@@ -1145,7 +1161,17 @@ public class GL11 {
         check();
     }
 
+    public static void glCopyBufferSubData(int readTarget, int writeTarget, long readOffset, long writeOffset, long numBytes) {
+        if (version10x < 30)
+            throw new IllegalStateException("glCopyBufferSubData is not supported");
+        check();
+        GLES30.glCopyBufferSubData(readTarget, writeTarget, (int) readOffset, (int) writeOffset, (int) numBytes);
+        check();
+    }
+
     public static void glVertexAttribDivisor(int index, int divisor) {
+        if (version10x < 30)
+            throw new IllegalStateException("glVertexAttribDivisor is not supported");
         check();
         if (!disableVertexAttribs) GLES30.glVertexAttribDivisor(index, divisor);
         if (print) System.out.println("glVertexAttribDivisor(" + index + ", " + divisor + ")");
@@ -1153,6 +1179,8 @@ public class GL11 {
     }
 
     public static void glVertexAttrib1f(int index, float value) {
+        if (version10x < 30)
+            throw new IllegalStateException("glVertexAttrib1f is not supported");
         if (!disableVertexAttribs) GLES30.glVertexAttrib1f(index, value);
     }
 
@@ -1210,13 +1238,51 @@ public class GL11 {
         check();
     }
 
+    public static void glBufferData(int target, int[] data, int usage) {
+        if (disableBuffers) return;
+
+        int size = Math.multiplyExact(data.length, 4);
+        ByteBuffer bb = Pools.byteBufferPool.get(size, false, false);
+        bb.asIntBuffer().put(data);
+        bb.position(0).limit(size);
+
+        glBufferData(target, bb, usage);
+
+        Pools.byteBufferPool.returnBuffer(bb);
+    }
+
+    public static void glMultiDrawArrays(int drawMode, IntBuffer starts, IntBuffer lengths) {
+        check();
+        checkProgramStatus();
+        drawMode = overrideMode(drawMode);
+
+        int count = Math.min(starts.remaining(), lengths.remaining());
+        int sOffset = starts.position();
+        int lOffset = lengths.position();
+        for (int i = 0; i < count; i++) {
+            GLES20.glDrawArrays(drawMode, starts.get(i + sOffset), lengths.get(i + lOffset));
+        }
+        check();
+    }
+
+    public static void glMultiDrawElements(int drawMode, IntBuffer lengths, int elementIntType, IntBuffer starts) {
+        check();
+        checkProgramStatus();
+        drawMode = overrideMode(drawMode);
+
+        int count = Math.min(starts.remaining(), lengths.remaining());
+        int sOffset = starts.position();
+        int lOffset = lengths.position();
+        for (int i = 0; i < count; i++) {
+            GLES20.glDrawElements(drawMode, lengths.get(i + lOffset), elementIntType, starts.get(i + sOffset));
+        }
+        check();
+    }
+
     public static void glBufferSubData(int target, long offset, ByteBuffer buffer) {
         if (buffer.limit() == 0) return;
         if (offset > Integer.MAX_VALUE) throw new RuntimeException("Max allowed offset is 2GBi");
         check();
-        // check the memory is valid
-        buffer.get(0);
-        buffer.get(buffer.limit() - 1);
         if (print)
             System.out.println("glBufferSubData(" + getBufferTarget(target) + ", " + offset + ", " + buffer + ")");
         if (!disableBuffers)
@@ -1224,7 +1290,37 @@ public class GL11 {
         check();
     }
 
+    public static void glDrawArraysIndirect(int drawMode, long offset) {
+        if (version10x < 31)
+            throw new IllegalStateException("glDrawArraysIndirect is not supported");
+        check();
+        GLES31.glDrawArraysIndirect(drawMode, offset);
+        check();
+    }
+
+    public static void glDrawElementsIndirect(int drawMode, int elementIntType, long offset) {
+        if (version10x < 31)
+            throw new IllegalStateException("glDrawElementsIndirect is not supported");
+        check();
+        GLES31.glDrawElementsIndirect(drawMode, elementIntType, offset);
+        check();
+    }
+
+    public static void glBufferSubData(int target, long offset, IntBuffer buffer) {
+        if (buffer.limit() == 0) return;
+        if (offset > Integer.MAX_VALUE) throw new RuntimeException("Max allowed offset is 2GBi");
+        check();
+        if (print)
+            System.out.println("glBufferSubData(" + getBufferTarget(target) + ", " + offset + ", " + buffer + ")");
+        if (!disableBuffers)
+            GLES20.glBufferSubData(target, (int) offset, 4 * buffer.remaining(), buffer);
+        check();
+    }
+
     public static int glGenVertexArrays() {
+        if (version10x < 30)
+            throw new IllegalStateException("glGenVertexArrays is not supported");
+
         check();
         GLES30.glGenVertexArrays(1, tmpInt1, 0);
         if (print) System.out.println("glGenVertexArrays() -> " + tmpInt1[0]);
@@ -1237,6 +1333,9 @@ public class GL11 {
     }
 
     public static void glDeleteVertexArrays(int i) {
+        if (version10x < 30)
+            throw new IllegalStateException("glDeleteVertexArrays is not supported");
+
         check();
         tmpInt1[0] = i;
         GLES30.glDeleteVertexArrays(1, tmpInt1, 0);
@@ -1245,6 +1344,9 @@ public class GL11 {
     }
 
     public static void glBindVertexArray(int array) {
+        if (version10x < 30)
+            throw new IllegalStateException("glBindVertexArray is not supported");
+
         check();
         GLES30.glBindVertexArray(array);
         if (print) System.out.println("glBindVertexArray(" + array + ")");
@@ -1609,10 +1711,10 @@ public class GL11 {
         Long dt = queriedTimes.get(id);
         if (dt != null) {
             if (type == GL_QUERY_RESULT_AVAILABLE) return 1;
-            else return (int) (long) dt;
+            else return dt;
         } else if (version10x >= 30) {
             GLES30.glGetQueryObjectuiv(id, type, tmpInt1, 0);
-            return tmpInt1[0];
+            return ((long) tmpInt1[0] << 32) >>> 32; // unsigned
         } else return 0;
     }
 
