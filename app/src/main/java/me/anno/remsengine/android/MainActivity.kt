@@ -15,6 +15,7 @@ import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GestureDetectorCompat
+import me.anno.Engine
 import me.anno.Time
 import me.anno.config.DefaultConfig.style
 import me.anno.ecs.Entity
@@ -63,6 +64,7 @@ import org.apache.logging.log4j.LogManager
 import org.lwjgl.opengl.GL11
 import java.math.BigDecimal
 import kotlin.math.min
+import kotlin.system.exitProcess
 import kotlin.test.assertTrue
 
 // todo create some small games to show our engine's capabilities
@@ -82,6 +84,14 @@ class MainActivity : AppCompatActivity() {
     init {
         GFX.windows.clear()
         GFX.windows.add(osWindow)
+
+        if (Engine.shutdown) {
+            Engine.cancelShutdown()
+        }
+        Engine.registerForShutdown {
+            finishAndRemoveTask()
+            exitProcess(0)
+        }
     }
 
     private fun defineFeatures() {
