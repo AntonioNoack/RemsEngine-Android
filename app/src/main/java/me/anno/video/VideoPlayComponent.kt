@@ -150,7 +150,7 @@ class VideoPlayComponent private constructor(val videoPath: String) : Component(
         val decoder = createDecoder(extractor, trackIndex, surfaceTexture)
         decoder.start()
 
-        startTime = Time.gameTimeN
+        startTime = Time.gameTimeNanos
 
         var reachedEnd = false
         val info = MediaCodec.BufferInfo()
@@ -182,7 +182,7 @@ class VideoPlayComponent private constructor(val videoPath: String) : Component(
 
                 // Synchronize presentation
                 val presentationTimeNanos = info.presentationTimeUs * 1000
-                val currentTimeNanos = Time.gameTimeN - startTime
+                val currentTimeNanos = Time.gameTimeNanos - startTime
 
                 if (presentationTimeNanos > currentTimeNanos) {
                     try {
