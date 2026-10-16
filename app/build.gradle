@@ -8,7 +8,7 @@ android {
     compileSdk 36
 
     defaultConfig {
-        applicationId "me.anno.remsengine"
+        applicationId "me.anno.loafborn"
         minSdkVersion 21
         targetSdk 36
         versionCode 1
@@ -56,7 +56,7 @@ android {
     }
 
     // prevent duplicate files, which don't matter anyways
-    namespace 'me.anno.remsengine'
+    namespace 'me.anno.loafborn'
 }
 
 dependencies {
@@ -70,6 +70,7 @@ dependencies {
 
     //noinspection GradlePath
     implementation files('../../RemsEngine/out/artifacts/Android/RemsEngine.jar')
+    implementation files('../../BrickGames/out/artifacts/LoafbornAndroid/LoafbornAndroid.jar')
 
     // multiple dexes for more than 65k classes
     implementation 'com.android.support:multidex:1.0.3'

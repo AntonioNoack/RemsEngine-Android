@@ -13,6 +13,7 @@ import me.anno.gpu.Logo.logoBackgroundColor
 import me.anno.gpu.RenderStep
 import me.anno.gpu.RenderStep.renderStep
 import me.anno.gpu.WindowManagement
+import me.anno.gpu.shader.builder.ShaderBuilder
 import me.anno.remsengine.android.MainActivity.Companion.setStatic
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.opengl.GL
@@ -34,6 +35,7 @@ class Renderer : GLSurfaceView.Renderer {
         fun newSession1() {
             GFXState.newSession()
             GL11.invalidateBinding()
+            RenderStep.clearState()
         }
     }
 
@@ -71,6 +73,10 @@ class Renderer : GLSurfaceView.Renderer {
 
             GL11C.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
             GL11C.glViewport(0, 0, window.width, window.height)
+
+            WindowRenderFlags.idleFPS = 10
+            WindowRenderFlags.showTutorialKeys = false
+            ShaderBuilder.defaultRandomness = false
 
             when (frameIndex++) {
                 0 -> {

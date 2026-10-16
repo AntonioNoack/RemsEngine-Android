@@ -35,7 +35,8 @@ public class AL {
     public static void alcDestroyContext(long context) {
     }
 
-    public static void alcCloseDevice(long device) {
+    public static boolean alcCloseDevice(long device) {
+        return true;
     }
 
     public static int alGetError() {

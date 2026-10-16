@@ -15,31 +15,16 @@ import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GestureDetectorCompat
+import me.anno.Engine
 import me.anno.Time
-import me.anno.config.DefaultConfig.style
-import me.anno.ecs.Entity
-import me.anno.ecs.components.audio.AudioComponent
-import me.anno.ecs.components.light.sky.SkyboxBase
-import me.anno.ecs.components.mesh.MeshComponent
-import me.anno.engine.DefaultAssets
 import me.anno.engine.EngineBase
 import me.anno.engine.Events.addEvent
 import me.anno.engine.WindowRenderFlags
-import me.anno.engine.ui.render.PlayMode
-import me.anno.engine.ui.render.RenderMode
-import me.anno.engine.ui.render.RenderView0
-import me.anno.engine.ui.render.SceneView
-import me.anno.engine.ui.render.SceneView.Companion.createSceneUI
-import me.anno.engine.ui.scenetabs.ECSSceneTab
-import me.anno.engine.ui.scenetabs.ECSSceneTabs
 import me.anno.gpu.GFX
 import me.anno.gpu.GPUTasks
 import me.anno.input.Input
-import me.anno.io.files.Reference.getReference
-import me.anno.io.saveable.Saveable.Companion.registerCustomClass
+import me.anno.loafborn.ui.components.createMainMenu
 import me.anno.remsengine.android.KeyMap.keyCodeMapping
-import me.anno.remsengine.android.test.TestControls
-import me.anno.remsengine.android.test.TestRenderMode.testRenderMode
 import me.anno.ui.Panel
 import me.anno.ui.base.groups.PropertyTablePanel
 import me.anno.ui.base.text.TextPanel
@@ -58,11 +43,11 @@ import me.anno.utils.types.AnyToFloat
 import me.anno.utils.types.AnyToInt
 import me.anno.utils.types.AnyToLong
 import me.anno.utils.types.Strings.isNotBlank2
-import me.anno.video.VideoPlayComponent
 import org.apache.logging.log4j.LogManager
 import org.lwjgl.opengl.GL11
 import java.math.BigDecimal
 import kotlin.math.min
+import kotlin.system.exitProcess
 import kotlin.test.assertTrue
 
 // todo create some small games to show our engine's capabilities
@@ -82,6 +67,14 @@ class MainActivity : AppCompatActivity() {
     init {
         GFX.windows.clear()
         GFX.windows.add(osWindow)
+
+        if (Engine.shutdown) {
+            Engine.cancelShutdown()
+        }
+        Engine.registerForShutdown {
+            finishAndRemoveTask()
+            exitProcess(0)
+        }
     }
 
     private fun defineFeatures() {
@@ -106,39 +99,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun createEngineInstance(): EngineBase {
-
-        registerCustomClass(TestControls())
-
-        val scene = Entity()
-        // scene.add(Skybox().apply { cumulus = 0f; cirrus = 0f })
-        scene.add(SkyboxBase())
-        // scene.add(MeshComponent(IcosahedronModel.createIcosphere(4)))
-        scene.add(MeshComponent(DefaultAssets.icoSphere))
-        scene.add(VideoPlayComponent.create(this, "treemiddle.mp4"))
-
-        // add audio-playing component
-        scene.add(AudioComponent().apply {
-            source = getReference("res://sounds/Lovely.mp3")
-            autoStart = true
-        })
-
-        scene.add(TestControls())
-
-        val renderMode = if (true) {
-            testRenderMode.value
-        } else RenderMode.SIMPLE
-        return TestEngine("Rem's Engine") {
-            val p = if (true) {
-                createSceneUI(scene) {
-                    it.renderView.renderMode = renderMode
-                }
-            } else {
-                ECSSceneTabs.open(ECSSceneTab(scene.ref, PlayMode.EDITING), true)
-                val p = SceneView(RenderView0(PlayMode.EDITING, style), style)
-                p.renderView.renderMode = renderMode
-                p
-            }
-            listOf(p.fill(1f))
+        return TestEngine("Loafborn") {
+            listOf(createMainMenu().fill(1f))
         }
     }
 
@@ -151,7 +113,7 @@ class MainActivity : AppCompatActivity() {
     private fun defineFolders() {
         val src0 = OS.documents
         val src1 = src0.getChild("RemsEngine")
-        val src2 = src1.getChild("SampleProject")
+        val src2 = src1.getChild("Loafborn")
 
         LOGGER.info("home: ${OS.home}, ${OS.home.exists}, ${OS.home.mkdirs()}")
         LOGGER.info("s0: $src0, ${src0.exists}, ${src0.mkdirs()}")
@@ -351,20 +313,6 @@ class MainActivity : AppCompatActivity() {
         // joystick, controller, ...
         println("generic motion event")
         return super.onGenericMotionEvent(event)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        GFX.glThread = Thread.currentThread()
-        Renderer.newSession1()
-        glSurfaceView?.onResume()
-        LOGGER.info("Resumed")
-    }
-
-    override fun onPause() {
-        super.onPause()
-        glSurfaceView?.onPause()
-        LOGGER.info("Paused")
     }
 
     companion object {

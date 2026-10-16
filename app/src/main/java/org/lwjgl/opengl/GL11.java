@@ -742,6 +742,17 @@ public class GL11 {
         check();
     }
 
+    public static void glFramebufferTextureLayer(int target, int attachment, int texture, int level, int layer) {
+        check();
+        if (version10x < 30) throw new IllegalArgumentException("glFramebufferLayer not supported");
+        if (print)
+            System.out.println("glFramebufferLayer(" + getTextureTarget(target) + ", " + getAttachment(attachment) + ", " +
+                    texture + ", " + level + ", " + layer + ")");
+        if (!disableFramebuffers)
+            GLES30.glFramebufferTextureLayer(target, attachment, texture, level, layer);
+        check();
+    }
+
     private static void determineDrawBuffers() {
         if (supportsDrawBuffers == null) {
             supportsDrawBuffers = version10x >= 30 || hasExtension("GL_EXT_draw_buffers");
@@ -1094,6 +1105,15 @@ public class GL11 {
         GLES30.glUniformMatrix4x3fv(uniform, buffer.remaining() / 12, rowMajor, buffer);
         if (print)
             System.out.println("glUniformMatrix4x3fv(" + uniform + ", " + buffer.remaining() / 12 +
+                    ", " + rowMajor + ", " + buffer + ")");
+        check();
+    }
+
+    public static void glUniformMatrix3fv(int uniform, boolean rowMajor, FloatBuffer buffer) {
+        check();
+        GLES30.glUniformMatrix3fv(uniform, buffer.remaining() / 9, rowMajor, buffer);
+        if (print)
+            System.out.println("glUniformMatrix3fv(" + uniform + ", " + buffer.remaining() / 9 +
                     ", " + rowMajor + ", " + buffer + ")");
         check();
     }
@@ -1737,6 +1757,18 @@ public class GL11 {
         } else {
             // compute not supported
             throw new IllegalStateException("Compute Shader not supported");
+        }
+    }
+
+    public static ByteBuffer glMapBufferRange(int target, long offset, long size, int access) {
+        if (offset < 0 || offset > Integer.MAX_VALUE || size < 0 || size > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Offset or size out of valid range: " + offset + ", " + size);
+        }
+
+        if (version10x >= 30) {
+            return (ByteBuffer) GLES30.glMapBufferRange(target, (int) offset, (int) size, access);
+        } else {
+            throw new IllegalStateException("glMapBufferRange is not supported");
         }
     }
 
